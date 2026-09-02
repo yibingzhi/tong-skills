@@ -9,17 +9,17 @@ Skill 素材库。格式遵循 [Agent Skills](https://agentskills.io/specificati
 | Skill | 做什么 |
 |---|---|
 | [tong-chart](skills/tong-chart/) | 本地 Mermaid 出图（流程 / 架构 / 时序 / 甘特等），多主题，macOS · Windows · Linux |
+| [tong-cover](skills/tong-cover/) | 本地 Pillow 封面 / 刊头 / 简报 / 金句卡，按星期换色 |
 
 ## 安装
 
-仓库公开之后：
-
 ```bash
-npx skills add <github-user>/TongSkills
-npx skills add <github-user>/TongSkills --skill tong-chart
+npx skills add https://gitee.com/yibingzhi/tong-skills.git
+npx skills add https://gitee.com/yibingzhi/tong-skills.git --skill tong-chart
+npx skills add https://gitee.com/yibingzhi/tong-skills.git --skill tong-cover
 ```
 
-把 `<github-user>` 换成实际账号。装好后，直接说「画一张架构图」或「用 tong-chart 出图」即可。
+短名 `owner/repo` 只走 GitHub，Gitee 必须用完整 git URL。仓库需公开。
 
 ChatGPT / Codex / SkillHub 需要 zip 时，从仓库根目录：
 
@@ -43,15 +43,17 @@ docs/              怎么写、怎么打包
 ## 开发
 
 ```bash
-python scripts/new_skill.py my-skill
+python scripts/new_skill.py tong-name
 python scripts/validate_skills.py
-python scripts/pack_skill.py my-skill
+python scripts/pack_skill.py tong-cover
 ```
 
-`tong-chart` 自带单元测试：
+`tong-chart` / `tong-cover` 自带单元测试。`tong-cover` 需要 Pillow：
 
 ```bash
+pip install pillow
 python -m unittest discover -s skills/tong-chart/tests
+python -m unittest discover -s skills/tong-cover/tests
 ```
 
 ## License

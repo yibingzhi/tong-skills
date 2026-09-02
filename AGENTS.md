@@ -67,7 +67,7 @@ One directory = one job. New public skills must be named `tong-<job>`.
 ## Commands
 
 ```bash
-python scripts/new_skill.py my-skill
+python scripts/new_skill.py tong-name
 python scripts/validate_skills.py
 python scripts/pack_skill.py tong-chart
 ```

@@ -8,3 +8,7 @@ skills:
     status: published
     summary: 本地 Mermaid 出图（流程/架构/时序/甘特等），多主题，macOS·Windows·Linux
     tags: mermaid,diagram,feishu
+  - name: tong-cover
+    status: published
+    summary: 本地 Pillow 出封面/刊头/简报/金句卡，按星期换色，macOS·Windows·Linux
+    tags: cover,wechat,pillow

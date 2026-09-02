@@ -12,5 +12,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Install skill runtime deps
+        run: pip install pillow
       - name: Validate skills
         run: python scripts/validate_skills.py

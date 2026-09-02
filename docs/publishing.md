@@ -2,21 +2,22 @@
 
 One skill tree. GitHub install and zip upload share the same `skills/<name>/`. Do not fork per platform.
 
-## 1. GitHub + `npx skills` (default)
+## 1. Git + `npx skills` (default)
 
-This is how most agents install skills.
+This is how most agents install skills. This repo is on Gitee, so the install source is the full git URL (GitHub shorthand would look up the wrong host).
 
 1. Push this repo (public).
 2. Anyone runs:
 
 ```bash
-npx skills add <github-user>/TongSkills
-npx skills add <github-user>/TongSkills --skill tong-chart
+npx skills add https://gitee.com/yibingzhi/tong-skills.git
+npx skills add https://gitee.com/yibingzhi/tong-skills.git --skill tong-chart
+npx skills add https://gitee.com/yibingzhi/tong-skills.git --skill tong-cover
 ```
 
 The CLI looks in `skills/` by default. That is why skills live there, not at the repo root.
 
-After the GitHub URL exists, put it in README and do not invent a second install path.
+After the public URL exists, put it in README and do not invent a second install path.
 
 ## 2. Zip for SkillHub / Codex / ChatGPT
 

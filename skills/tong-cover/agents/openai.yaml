@@ -1,0 +1,9 @@
+interface:
+  display_name: "Tong Cover"
+  short_description: "本地 Pillow 出封面/刊头/简报/金句卡，按星期换色，macOS·Windows·Linux"
+  default_prompt: >-
+    Use $tong-cover to pick feed/editorial/briefing/divider/quote (or --pack),
+    leave --preset auto unless the user named a color, and render via
+    scripts/make_cover.py.
+policy:
+  allow_implicit_invocation: true
