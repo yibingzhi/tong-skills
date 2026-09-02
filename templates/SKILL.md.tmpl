@@ -1,0 +1,35 @@
+---
+name: {{NAME}}
+description: >-
+  {{DESCRIPTION}}
+license: MIT
+metadata:
+  version: "0.1"
+  author: TongSkills
+---
+
+# {{DISPLAY}}
+
+One paragraph: what the agent actually does. No marketing.
+
+## Workflow
+
+1. Decide whether this skill applies. If not, stop.
+2. Do the default path with the bundled script (if any).
+3. Return concrete artifacts (paths, not dumps).
+
+Default command (forward slashes; `<skill-dir>` is this folder):
+
+```bash
+python3 "<skill-dir>/scripts/example.py" path/to/input
+```
+
+If `python3` is missing, use `py -3` with the same arguments.
+
+## Quality gate
+
+- Output matches what the user asked for.
+- No secrets in files or logs.
+- Failures tell the agent what to fix.
+
+Read [references/notes.md](references/notes.md) only when the default path is not enough.

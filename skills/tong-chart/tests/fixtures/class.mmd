@@ -1,0 +1,11 @@
+classDiagram
+  direction LR
+  class User {
+    +String name
+    +submitOrder()
+  }
+  class Order {
+    +String status
+    +confirm()
+  }
+  User --> Order : 提交

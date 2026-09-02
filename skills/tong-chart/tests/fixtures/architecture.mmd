@@ -1,0 +1,21 @@
+flowchart LR
+  subgraph CLIENT["客户端"]
+    WEB["Web 应用"]
+    APP["移动端"]
+  end
+  subgraph SERVICE["服务层"]
+    API["API 网关"]
+    CORE["业务服务"]
+  end
+  subgraph DATA["数据层"]
+    DB[("业务数据库")]
+    CACHE[("缓存")]
+  end
+  WEB --> API
+  APP --> API
+  API --> CORE
+  CORE --> DB
+  CORE --> CACHE
+  class WEB,APP process
+  class API,CORE accent
+  class DB,CACHE store

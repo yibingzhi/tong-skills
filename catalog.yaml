@@ -1,0 +1,10 @@
+# Source of truth for the public skill list.
+# Agents: update this file AND the README catalog table together.
+# validate_skills.py fails if skills/ directories and this list disagree.
+
+license: MIT
+skills:
+  - name: tong-chart
+    status: published
+    summary: 本地 Mermaid 出图（流程/架构/时序/甘特等），多主题，macOS·Windows·Linux
+    tags: mermaid,diagram,feishu

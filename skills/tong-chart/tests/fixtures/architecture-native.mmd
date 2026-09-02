@@ -1,0 +1,9 @@
+architecture-beta
+  group platform(cloud)["业务平台"]
+  service web(internet)["Web 应用"] in platform
+  service api(server)["API 网关"] in platform
+  service core(server)["业务服务"] in platform
+  service db(database)["业务数据库"] in platform
+  web:R --> L:api
+  api:R --> L:core
+  core:R --> L:db

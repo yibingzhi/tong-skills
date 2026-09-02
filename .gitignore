@@ -1,0 +1,15 @@
+dist/
+__pycache__/
+*.py[cod]
+*$py.class
+.DS_Store
+Thumbs.db
+tmp/
+*.zip
+.venv/
+venv/
+env/
+node_modules/
+.idea/
+.vscode/
+*.mmd.png

@@ -1,0 +1,11 @@
+flowchart TD
+  START(["提交申请"]) --> CHECK{"材料完整？"}
+  CHECK -->|是| REVIEW["进入审核"]
+  CHECK -->|否| RETURN["退回补充"]
+  REVIEW --> STORE[("保存结果")]
+  RETURN --> FIX(["修改后重新提交"])
+  class START,FIX startEnd
+  class RETURN process
+  class REVIEW accent
+  class CHECK decision
+  class STORE store

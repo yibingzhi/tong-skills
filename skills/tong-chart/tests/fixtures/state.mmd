@@ -1,0 +1,9 @@
+stateDiagram
+  state "草稿" as Draft
+  state "审核中" as Reviewing
+  state "已通过" as Approved
+  [*] --> Draft
+  Draft --> Reviewing: 提交
+  Reviewing --> Approved: 通过
+  Reviewing --> Draft: 退回
+  Approved --> [*]

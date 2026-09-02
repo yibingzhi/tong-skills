@@ -1,0 +1,11 @@
+sequenceDiagram
+  participant U as 用户
+  participant A as 应用
+  participant S as 服务
+  participant D as 数据库
+  U->>A: 提交请求
+  A->>S: 校验并处理
+  S->>D: 保存结果
+  D-->>S: 保存成功
+  S-->>A: 返回结果
+  A-->>U: 展示成功状态

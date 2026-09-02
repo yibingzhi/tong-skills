@@ -1,0 +1,10 @@
+interface:
+  display_name: "Tong Chart"
+  short_description: "本地 Mermaid 出图（流程/架构/时序/甘特等），多主题，macOS·Windows·Linux"
+  default_prompt: >-
+    Use $tong-chart to pick the clearest Mermaid diagram type, write concise .mmd
+    source, apply the cursor theme (or a user-named style/accent), and render
+    validated PNG plus editable source via local mermaid-cli.
+
+policy:
+  allow_implicit_invocation: true

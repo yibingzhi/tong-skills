@@ -1,0 +1,16 @@
+erDiagram
+  direction LR
+  USER ||--o{ ORDER : 提交
+  ORDER ||--|{ ORDER_ITEM : 包含
+  USER {
+    string id PK
+    string name
+  }
+  ORDER {
+    string id PK
+    string status
+  }
+  ORDER_ITEM {
+    string id PK
+    int quantity
+  }

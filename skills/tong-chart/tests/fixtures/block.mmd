@@ -1,0 +1,5 @@
+block
+  columns 3
+  CLIENT["客户端"] REQUEST<["请求"]>(right) API["API 网关"]
+  space:2 FORWARD<["转发"]>(down)
+  DB[("数据库")] WRITE<["写入"]>(left) CORE["业务服务"]
