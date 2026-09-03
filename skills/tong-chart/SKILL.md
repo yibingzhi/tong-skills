@@ -2,7 +2,7 @@
 name: tong-chart
 description: >-
   Create polished Mermaid diagrams and render them as validated PNG or SVG files
-  for documents and Feishu. Use for 流程图、架构图、系统图、时序图、状态图、泳道图、类图、ER 图、
+  for documents. Use for 流程图、架构图、系统图、时序图、状态图、泳道图、类图、ER 图、
   思维导图、时间线、甘特图、GitGraph、用户旅程图、饼图、象限图、原生架构图、方块图、看板图、
   桑基图、XY 图或其他 Mermaid 文档配图。Triggers include tong-chart, tongchart, flowchart, mermaid 出图.
 license: MIT
