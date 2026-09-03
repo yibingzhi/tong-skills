@@ -1,0 +1,9 @@
+interface:
+  display_name: "Tong MySQL (read-only)"
+  short_description: "只读 MySQL：SELECT/SHOW/DESCRIBE，强制 LIMIT，凭证本地填"
+  default_prompt: >-
+    Use $tong-mysql-ro for SELECT/SHOW/DESCRIBE/EXPLAIN via scripts/query.py.
+    Describe columns before named SELECT. Never write. Never reuse
+    application.yml credentials.
+policy:
+  allow_implicit_invocation: true

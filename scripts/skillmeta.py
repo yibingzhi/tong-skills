@@ -163,7 +163,7 @@ def skill_entry_script(skill_dir: Path) -> Path:
 def iter_pack_files(skill_dir: Path) -> list[str]:
     """Relative POSIX paths to include in the upload zip."""
     skip_dirs = {"tests", "tmp", "__pycache__"}
-    skip_names = {"build_skill_zip.py"}
+    skip_names = {"build_skill_zip.py", "secrets.local.env"}
     entries: list[str] = []
     skill_md = skill_dir / "SKILL.md"
     if not skill_md.is_file():

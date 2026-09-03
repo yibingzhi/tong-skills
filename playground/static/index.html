@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>橦测 · Tong Lab</title>
+  <style>
+    :root {
+      --bg: #0b0a09;
+      --bg-2: #12100e;
+      --panel: #181512;
+      --ink: #f4ecdc;
+      --muted: #c2b6a3;
+      --dim: #8f8576;
+      --line: rgba(244, 236, 220, 0.1);
+      --gold: #c9a56a;
+      --gold-dim: rgba(201, 165, 106, 0.18);
+      --vermilion: #d64535;
+      --ok: #8aa57a;
+      --display: "Palatino Linotype", Palatino, "Songti SC", "STSong", "Noto Serif SC", "SimSun", serif;
+      --sans: DengXian, "等线", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      --mono: "Cascadia Code", "Cascadia Mono", "Sarasa Mono SC", Consolas, monospace;
+      --r: 14px;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--bg);
+      font: 14px/1.5 var(--sans);
+      letter-spacing: 0.01em;
+    }
+    body::before {
+      content: "";
+      pointer-events: none;
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background:
+        radial-gradient(90% 50% at -10% -10%, rgba(214, 69, 53, 0.16), transparent 46%),
+        radial-gradient(70% 40% at 110% 0%, rgba(201, 165, 106, 0.08), transparent 42%),
+        linear-gradient(180deg, #141210 0%, var(--bg) 38%);
+    }
+    body::after {
+      content: "";
+      pointer-events: none;
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      opacity: 0.04;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent 0 2px,
+        rgba(255, 255, 255, 0.35) 2px 3px
+      );
+    }
+    .shell {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      height: 100%;
+      min-height: 100vh;
+    }
+    aside {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      padding: 28px 22px 22px;
+      border-right: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(24, 21, 18, 0.92), rgba(12, 11, 10, 0.96));
+      overflow: auto;
+    }
+    .brand {
+      display: grid;
+      grid-template-columns: 58px 1fr;
+      gap: 14px;
+      align-items: center;
+    }
+    .seal {
+      width: 58px;
+      height: 58px;
+      display: grid;
+      place-items: center;
+      color: var(--vermilion);
+      font: 700 30px/1 var(--display);
+      border: 1px solid var(--vermilion);
+      box-shadow: inset 0 0 0 3px rgba(214, 69, 53, 0.18);
+      background: rgba(214, 69, 53, 0.06);
+    }
+    .brand h1 {
+      margin: 0;
+      font: 500 28px/1 var(--display);
+      letter-spacing: 0.08em;
+    }
+    .brand p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+    .modes {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      padding: 4px;
+      border: 1px solid var(--line);
+      background: rgba(0, 0, 0, 0.28);
+    }
+    .modes button {
+      height: 36px;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      font: 12px var(--sans);
+      letter-spacing: 0.08em;
+      cursor: pointer;
+    }
+    .modes button[aria-pressed="true"] {
+      background: var(--ink);
+      color: var(--bg);
+    }
+    .aside-hint {
+      margin: 0;
+      color: var(--dim);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+    .llm { display: none; }
+    body.mode-chat .llm { display: grid; gap: 4px; }
+    label.field {
+      display: block;
+      margin: 10px 0 4px;
+      color: var(--gold);
+      font-size: 10px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+    }
+    input[type="text"], input[type="password"], textarea {
+      width: 100%;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      background: transparent;
+      color: var(--ink);
+      font: 13px/1.5 var(--mono);
+      padding: 8px 0 10px;
+      outline: none;
+    }
+    input:focus, textarea:focus { border-color: var(--gold); }
+    textarea {
+      min-height: 84px;
+      border: 1px solid var(--line);
+      background: rgba(0, 0, 0, 0.28);
+      padding: 12px 14px;
+      resize: vertical;
+    }
+    .toggles { display: grid; gap: 8px; font-size: 13px; }
+    .toggles label {
+      margin: 0;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      color: var(--muted);
+      cursor: pointer;
+    }
+    .toggles input { accent-color: var(--vermilion); }
+    .catalog-label {
+      margin: 8px 0 0;
+      color: var(--gold);
+      font-size: 10px;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+    }
+    .skills {
+      display: grid;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .skill {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: 10px;
+      text-align: left;
+      border: 1px solid transparent;
+      background: var(--panel);
+      padding: 12px 12px 12px 10px;
+      cursor: pointer;
+      color: inherit;
+      font: inherit;
+      transition: border-color 160ms ease, transform 160ms ease;
+    }
+    .skill:hover { border-color: var(--gold-dim); }
+    .skill[aria-pressed="true"] {
+      border-color: var(--vermilion);
+      background: linear-gradient(90deg, rgba(214, 69, 53, 0.12), var(--panel) 42%);
+    }
+    .skill em {
+      color: var(--gold);
+      font: 11px var(--mono);
+      font-style: normal;
+      padding-top: 3px;
+    }
+    .skill b {
+      display: block;
+      font: 16px var(--display);
+      letter-spacing: 0.02em;
+    }
+    .skill span {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    main {
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      min-width: 0;
+      min-height: 0;
+      padding: 8px;
+    }
+    header.top {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 16px;
+      padding: 22px 26px 16px;
+    }
+    .kicker {
+      color: var(--gold);
+      font-size: 10px;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    header.top h2 {
+      margin: 0;
+      font: 42px/0.95 var(--display);
+      letter-spacing: 0.02em;
+    }
+    .meta-col { text-align: right; }
+    header.top small, #clock {
+      display: block;
+      color: var(--muted);
+      font: 12px var(--mono);
+    }
+    #clock { color: var(--gold); margin-bottom: 6px; }
+    .presets {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 0 26px 12px;
+    }
+    .presets button {
+      border: 1px solid var(--gold-dim);
+      background: transparent;
+      color: var(--gold);
+      font: 12px var(--mono);
+      padding: 6px 12px;
+      cursor: pointer;
+    }
+    .presets button:hover { background: var(--gold-dim); }
+    .stage {
+      min-height: 0;
+      margin: 0 18px;
+      border: 1px solid var(--line);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.02), transparent 18%),
+        var(--bg-2);
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+    .stage-bar {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 14px;
+      border-bottom: 1px solid var(--line);
+      color: var(--dim);
+      font: 10px var(--mono);
+      letter-spacing: 0.2em;
+    }
+    .log {
+      overflow: auto;
+      padding: 18px 20px;
+      font: 12.5px/1.6 var(--mono);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .hint { color: var(--muted); margin: 0; font-family: var(--sans); line-height: 1.7; }
+    .bubble {
+      margin: 0 0 14px;
+      padding: 12px 14px 12px 16px;
+      background: rgba(244, 236, 220, 0.03);
+      border-left: 2px solid var(--ok);
+    }
+    .bubble.user { border-left-color: var(--gold); }
+    .bubble.tool { border-left-color: var(--vermilion); color: #d8d0c2; }
+    .bubble-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 6px;
+      color: var(--dim);
+      font-size: 10px;
+      letter-spacing: 0.18em;
+    }
+    .composer {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      padding: 14px 18px 18px;
+      align-items: end;
+    }
+    button.send {
+      height: 84px;
+      min-width: 108px;
+      padding: 0 22px;
+      border: 0;
+      background: var(--vermilion);
+      color: #fff7ee;
+      font: 700 14px var(--sans);
+      letter-spacing: 0.16em;
+      cursor: pointer;
+    }
+    button.send:hover { filter: brightness(1.06); }
+    button.send:disabled { opacity: 0.38; cursor: wait; }
+    .warn {
+      color: var(--vermilion);
+      font-size: 12px;
+      padding: 0 26px 8px;
+    }
+    @media (max-width: 900px) {
+      .shell { grid-template-columns: 1fr; height: auto; }
+      aside { max-height: none; }
+      header.top h2 { font-size: 32px; }
+      button.send { height: 48px; }
+    }
+  </style>
+</head>
+<body class="mode-script">
+  <div class="shell">
+    <aside>
+      <div class="brand">
+        <div class="seal" aria-hidden="true">测</div>
+        <div>
+          <h1>Tong Lab</h1>
+          <p>Local instrument</p>
+        </div>
+      </div>
+      <div class="modes" role="tablist">
+        <button type="button" id="tab-script" aria-pressed="true">跑脚本</button>
+        <button type="button" id="tab-chat" aria-pressed="false">对话测</button>
+      </div>
+      <p class="aside-hint" id="mode-hint">默认不调模型。选 skill，点预设，直接跑本机 CLI。</p>
+      <div class="llm">
+        <label class="field" for="base">Base URL</label>
+        <input id="base" type="text" spellcheck="false" placeholder="https://api.deepseek.com">
+        <label class="field" for="model">Model</label>
+        <input id="model" type="text" spellcheck="false" placeholder="deepseek-chat">
+        <label class="field" for="key">API Key</label>
+        <input id="key" type="password" autocomplete="off" spellcheck="false" placeholder="只留在这台浏览器">
+        <div class="toggles">
+          <label><input id="tools" type="checkbox" checked> 对话时允许调本机脚本</label>
+          <label><input id="refs" type="checkbox"> 把 references 塞进上下文</label>
+        </div>
+      </div>
+      <div class="toggles">
+        <label><input id="write" type="checkbox"> 允许写操作（commit / push）</label>
+      </div>
+      <p class="catalog-label">Catalog</p>
+      <div class="skills" id="skills"></div>
+    </aside>
+    <main>
+      <header class="top">
+        <div>
+          <div class="kicker">Skill under test</div>
+          <h2 id="title">选一个 skill</h2>
+        </div>
+        <div class="meta-col">
+          <span id="clock"></span>
+          <small id="meta">127.0.0.1 · 8765</small>
+        </div>
+      </header>
+      <div class="presets" id="presets"></div>
+      <div class="stage">
+        <div class="stage-bar"><span>CONSOLE</span><span>STDOUT</span></div>
+        <div class="log" id="log">
+          <p class="hint">先点左边的 skill。默认「跑脚本」：不用 Key，直接执行 bundled CLI。想看模型会不会按 SKILL.md 办事，再切到「对话测」。</p>
+        </div>
+      </div>
+      <p class="warn" id="warn" hidden>写操作会真的提交/推送，默认请关掉。</p>
+      <form class="composer" id="form">
+        <textarea id="prompt" placeholder="脚本参数，例如 --list"></textarea>
+        <button class="send" id="send" type="submit" disabled>运行</button>
+      </form>
+    </main>
+  </div>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const state = { skills: [], current: null, messages: [], mode: "script" };
+    const ROLE = { user: "IN", tool: "OUT", assistant: "NOTE" };
+
+    function tick() {
+      $("clock").textContent = new Date().toLocaleTimeString("zh-CN", { hour12: false });
+    }
+    tick();
+    setInterval(tick, 1000);
+
+    function loadSettings() {
+      $("base").value = localStorage.getItem("tong-lab-base") || "https://api.deepseek.com";
+      $("model").value = localStorage.getItem("tong-lab-model") || "deepseek-chat";
+      $("key").value = sessionStorage.getItem("tong-lab-key") || "";
+    }
+    function saveSettings() {
+      localStorage.setItem("tong-lab-base", $("base").value.trim());
+      localStorage.setItem("tong-lab-model", $("model").value.trim());
+      sessionStorage.setItem("tong-lab-key", $("key").value.trim());
+    }
+    ["base", "model", "key"].forEach((id) => $(id).addEventListener("change", saveSettings));
+    $("write").addEventListener("change", () => { $("warn").hidden = !$("write").checked; });
+
+    function setMode(mode) {
+      state.mode = mode;
+      document.body.className = mode === "chat" ? "mode-chat" : "mode-script";
+      $("tab-script").setAttribute("aria-pressed", mode === "script" ? "true" : "false");
+      $("tab-chat").setAttribute("aria-pressed", mode === "chat" ? "true" : "false");
+      $("send").textContent = mode === "chat" ? "问模型" : "运行";
+      $("mode-hint").textContent = mode === "chat"
+        ? "这一层才走大模型。Key 只留在浏览器，不写磁盘。"
+        : "默认不调模型。选 skill，点预设，直接跑本机 CLI。";
+      $("prompt").placeholder = mode === "chat"
+        ? "例如：出一张 3:4 小红书封面，标题每日速览"
+        : "脚本参数，例如 --list";
+    }
+    $("tab-script").onclick = () => setMode("script");
+    $("tab-chat").onclick = () => setMode("chat");
+
+    function addBubble(role, text, name) {
+      const hint = $("log").querySelector(".hint");
+      if (hint) hint.remove();
+      const el = document.createElement("div");
+      el.className = "bubble " + role;
+      const head = document.createElement("div");
+      head.className = "bubble-head";
+      const left = document.createElement("span");
+      left.textContent = ROLE[role] || role.toUpperCase();
+      const right = document.createElement("span");
+      right.textContent = name || "";
+      head.append(left, right);
+      const body = document.createElement("div");
+      body.textContent = text || "";
+      el.append(head, body);
+      $("log").appendChild(el);
+      $("log").scrollTop = $("log").scrollHeight;
+    }
+
+    function renderPresets(skill) {
+      $("presets").replaceChildren();
+      (skill.presets || []).forEach((item) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.textContent = item.label;
+        btn.onclick = () => {
+          $("prompt").value = item.argv;
+          $("form").requestSubmit();
+        };
+        $("presets").appendChild(btn);
+      });
+    }
+
+    function selectSkill(skill) {
+      state.current = skill;
+      state.messages = [];
+      $("log").replaceChildren();
+      $("title").textContent = skill.name;
+      $("meta").textContent = [
+        skill.entry || "无脚本",
+        skill.version ? "v" + skill.version : "",
+        "127.0.0.1",
+      ].filter(Boolean).join(" · ");
+      $("send").disabled = false;
+      document.querySelectorAll(".skill").forEach((btn) => {
+        btn.setAttribute("aria-pressed", btn.dataset.name === skill.name ? "true" : "false");
+      });
+      renderPresets(skill);
+      addBubble("assistant", "测 " + skill.name + "。跑脚本不用 Key；对话才会调用大模型。");
+    }
+
+    async function loadSkills() {
+      const res = await fetch("/api/skills");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || res.statusText);
+      state.skills = data.skills || [];
+      $("skills").replaceChildren();
+      if ((data.skipped || []).length) {
+        addBubble("tool", "跳过无效目录：\n" + data.skipped.join("\n"));
+      }
+      if (!state.skills.length) {
+        addBubble("tool", "skills/ 里没有可加载的 SKILL.md");
+        return;
+      }
+      state.skills.forEach((skill, index) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "skill";
+        btn.dataset.name = skill.name;
+        const idx = document.createElement("em");
+        idx.textContent = String(index + 1).padStart(2, "0");
+        const copy = document.createElement("div");
+        const title = document.createElement("b");
+        title.textContent = skill.name;
+        const summary = document.createElement("span");
+        summary.textContent = skill.summary || skill.description;
+        copy.append(title, summary);
+        btn.append(idx, copy);
+        btn.addEventListener("click", () => selectSkill(skill));
+        $("skills").appendChild(btn);
+        if (index === 0) selectSkill(skill);
+      });
+    }
+
+    $("form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      saveSettings();
+      const text = $("prompt").value.trim();
+      if (!state.current) return;
+      if (state.mode === "script") {
+        addBubble("user", text || "(无参数)");
+        $("send").disabled = true;
+        try {
+          const res = await fetch("/api/run", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              skill: state.current.name,
+              argv: text,
+              allow_write: $("write").checked,
+            }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || res.statusText);
+          addBubble("tool", data.output, (data.argv || []).join(" "));
+        } catch (err) {
+          addBubble("tool", String(err.message || err));
+        } finally {
+          $("send").disabled = false;
+        }
+        return;
+      }
+      if (!text) return;
+      if (!$("key").value.trim()) {
+        addBubble("tool", "对话模式需要 API Key。只测脚本的话切回「跑脚本」。");
+        return;
+      }
+      $("prompt").value = "";
+      state.messages.push({ role: "user", content: text });
+      addBubble("user", text);
+      $("send").disabled = true;
+      try {
+        const res = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            skill: state.current.name,
+            messages: state.messages,
+            base_url: $("base").value.trim(),
+            model: $("model").value.trim(),
+            api_key: $("key").value.trim(),
+            tools: $("tools").checked,
+            allow_write: $("write").checked,
+            include_refs: $("refs").checked,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || res.statusText);
+        (data.trace || []).forEach((item) => {
+          if (item.role === "tool") {
+            addBubble("tool", item.content, item.name);
+            return;
+          }
+          const calls = (item.tool_calls || []).map((call) => {
+            const fn = call.function || {};
+            return fn.name + " " + (fn.arguments || "");
+          }).join("\n");
+          const body = [item.content, calls].filter(Boolean).join("\n");
+          if (body) addBubble("assistant", body);
+          if (item.content) state.messages.push({ role: "assistant", content: item.content });
+        });
+      } catch (err) {
+        addBubble("tool", String(err.message || err));
+      } finally {
+        $("send").disabled = false;
+        $("prompt").focus();
+      }
+    });
+
+    loadSettings();
+    loadSkills().catch((err) => {
+      addBubble("tool", "加载失败：" + String(err.message || err));
+    });
+  </script>
+</body>
+</html>

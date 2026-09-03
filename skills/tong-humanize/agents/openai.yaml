@@ -1,0 +1,9 @@
+interface:
+  display_name: "Tong Humanize"
+  short_description: "去 AI 味改写：扫描套话/三毒/标点，按栏目交稿"
+  default_prompt: >-
+    Use $tong-humanize to pick a lane, run the bundled scan.py, rewrite only
+    the AI-flavored parts, and re-scan until the gate passes. Do not invent
+    facts or swap in another writer's voice.
+policy:
+  allow_implicit_invocation: true

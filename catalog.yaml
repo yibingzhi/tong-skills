@@ -16,3 +16,15 @@ skills:
     status: published
     summary: 项目仓状态→按需提交→推到 Gitee/GitHub/CNB
     tags: git,gitee,github,cnb
+  - name: tong-humanize
+    status: draft
+    summary: 去 AI 味改写：扫描套话/三毒/标点，按栏目交稿
+    tags: writing,wechat,humanize
+  - name: tong-mysql-ro
+    status: draft
+    summary: 只读 MySQL：SELECT/SHOW/DESCRIBE，强制 LIMIT，凭证本地填
+    tags: mysql,readonly,sql
+  - name: tong-mysql-write
+    status: draft
+    summary: 写库 DML：默认预览，确认后 --apply 并落回滚 SQL；不做 DDL
+    tags: mysql,write,sql

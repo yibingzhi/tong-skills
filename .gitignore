@@ -14,3 +14,4 @@ node_modules/
 .idea/
 .vscode/
 *.mmd.png
+**/secrets.local.env

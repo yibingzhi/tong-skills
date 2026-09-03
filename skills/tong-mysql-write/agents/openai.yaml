@@ -1,0 +1,10 @@
+interface:
+  display_name: "Tong MySQL (write)"
+  short_description: "写库 DML：默认预览，确认后 --apply 并落回滚 SQL；不做 DDL"
+  default_prompt: >-
+    Use $tong-mysql-write only when the user asked to change rows. Run
+    scripts/write.py without --apply first, then --apply --expect-rows N only
+    after they confirm that same SQL. --apply writes an undo .sql before
+    committing; report its path. No DDL. SELECT belongs to tong-mysql-ro.
+policy:
+  allow_implicit_invocation: true
