@@ -12,3 +12,7 @@ skills:
     status: published
     summary: 本地 Pillow 出封面/刊头/简报/金句卡，按星期换色，macOS·Windows·Linux
     tags: cover,wechat,pillow
+  - name: tong-git
+    status: published
+    summary: 项目仓状态→按需提交→推到 Gitee/GitHub/CNB
+    tags: git,gitee,github,cnb

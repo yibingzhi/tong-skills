@@ -149,6 +149,17 @@ def skill_version(meta: dict[str, Any]) -> str:
     raise ValueError(f"{meta.get('_path')}: metadata.version is required")
 
 
+def skill_entry_script(skill_dir: Path) -> Path:
+    scripts = skill_dir / "scripts"
+    py_files = sorted(path for path in scripts.glob("*.py") if path.is_file())
+    if not py_files:
+        raise FileNotFoundError(f"no scripts/*.py in {skill_dir.name}")
+    if len(py_files) > 1:
+        names = ", ".join(path.name for path in py_files)
+        raise ValueError(f"{skill_dir.name} has multiple entry scripts: {names}")
+    return py_files[0]
+
+
 def iter_pack_files(skill_dir: Path) -> list[str]:
     """Relative POSIX paths to include in the upload zip."""
     skip_dirs = {"tests", "tmp", "__pycache__"}

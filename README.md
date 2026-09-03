@@ -10,6 +10,7 @@ Skill 素材库。格式遵循 [Agent Skills](https://agentskills.io/specificati
 |---|---|
 | [tong-chart](skills/tong-chart/) | 本地 Mermaid 出图（流程 / 架构 / 时序 / 甘特等），多主题，macOS · Windows · Linux |
 | [tong-cover](skills/tong-cover/) | 本地 Pillow 封面 / 刊头 / 简报 / 金句卡，按星期换色 |
+| [tong-git](skills/tong-git/) | 项目仓状态 → 按需提交 → 推到 Gitee / GitHub / CNB |
 
 ## 安装
 
@@ -17,6 +18,7 @@ Skill 素材库。格式遵循 [Agent Skills](https://agentskills.io/specificati
 npx skills add https://gitee.com/yibingzhi/tong-skills.git
 npx skills add https://gitee.com/yibingzhi/tong-skills.git --skill tong-chart
 npx skills add https://gitee.com/yibingzhi/tong-skills.git --skill tong-cover
+npx skills add https://gitee.com/yibingzhi/tong-skills.git --skill tong-git
 ```
 
 短名 `owner/repo` 只走 GitHub，Gitee 必须用完整 git URL。仓库需公开。
@@ -42,19 +44,20 @@ docs/              怎么写、怎么打包
 
 ## 开发
 
+不用装到 `~/.cursor/skills`。对着仓库里的 `skills/` 测：
+
 ```bash
+python scripts/test_skills.py
+python scripts/test_skills.py tong-git
+python scripts/run_skill.py tong-cover --list
+python scripts/run_skill.py tong-git --repo . status
 python scripts/new_skill.py tong-name
-python scripts/validate_skills.py
 python scripts/pack_skill.py tong-cover
 ```
 
-`tong-chart` / `tong-cover` 自带单元测试。`tong-cover` 需要 Pillow：
+`test_skills.py` 会校验 `SKILL.md` 并跑每个 skill 的 `tests/`。`tong-cover` 的测试需要 Pillow：`pip install pillow`。
 
-```bash
-pip install pillow
-python -m unittest discover -s skills/tong-chart/tests
-python -m unittest discover -s skills/tong-cover/tests
-```
+直接跑某个 skill 自带的脚本（第一个 `scripts/*.py`）用 `run_skill.py`，参数原样传下去。
 
 ## License
 

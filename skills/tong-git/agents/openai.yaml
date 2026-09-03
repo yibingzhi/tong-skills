@@ -1,0 +1,8 @@
+interface:
+  display_name: "Tong Git"
+  short_description: "项目仓状态→按需提交→推到 Gitee/GitHub/CNB，禁止 force 和改 git config"
+  default_prompt: >-
+    Use $tong-git for status, commit-only-when-asked, and multi-host push via
+    scripts/sync_push.py. Never force-push, amend, or run git config.
+policy:
+  allow_implicit_invocation: true

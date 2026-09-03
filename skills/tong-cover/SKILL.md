@@ -3,8 +3,8 @@ name: tong-cover
 description: >-
   Renders brand covers and full article visual suites locally with Pillow:
   公众号封面 2.35:1, 刊头 4:3, 简报竖封 3:4, 分割条 4:1, 金句卡, 要闻清单卡.
-  Use when the user asks for 封面, 刊头, 分割条, 金句卡, 每日速览, 简报, 竖封, brand cover,
-  tong-cover, or 整套图文配图.
+  Use when the user asks for 封面, 刊头, 分割条, 金句卡, 每日速览, 简报, 竖封, 小红书, 小绿书,
+  视频号图文, brand cover, tong-cover, or 整套图文配图.
 license: MIT
 compatibility: Requires Python 3.10+ and Pillow. Works on macOS, Windows, and Linux.
 metadata:
@@ -44,13 +44,13 @@ Color board and layout notes: [references/presets.md](references/presets.md)
 | 整套图文 / 发文章 | `--pack DIR` | （全出） |
 | 公众号信息流封面 | `feed` | `2.35:1` |
 | 刊头 / 正文头图 | `editorial` | `4:3` |
-| 竖封 / 简报 / 海报 / 笔记封面 | `briefing` | `3:4`（更长用 `9:16`） |
+| 竖封 / 简报 / 海报 / 笔记封面 / 小红书 / 小绿书 / 视频号图文 | `briefing` | `3:4`（更长用 `9:16`） |
 | 章节分割条 | `divider` | `4:1` |
 | 金句卡 | `quote` | `1:1` |
 | 正文里的横版清单 | `bullet` | `4:3` |
-| 朋友圈方图 | `square` | `1:1` |
+| 朋友圈方图 / 小红书方图 | `square` | `1:1` |
 
-`poster` / `story` / 简报 / 竖封 / 竖版 / 海报 → `briefing`.
+`poster` / `story` / 简报 / 竖封 / 竖版 / 海报 / 小红书 / 小绿书 / 视频号图文 → `briefing`。封面必须带 `--bullets`。
 
 ## Commands
 

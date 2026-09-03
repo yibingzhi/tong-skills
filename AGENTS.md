@@ -43,7 +43,7 @@ A skill is a **procedure**. Do not pad `SKILL.md` with marketing copy.
 2. Fill `skills/<name>/SKILL.md` using [docs/authoring.md](docs/authoring.md)
 3. Keep `catalog.yaml` and the README catalog table in sync (the scaffold already appends a stub)
 4. If there is a script, add `tests/`
-5. `python scripts/validate_skills.py`
+5. `python scripts/test_skills.py` (same as `validate_skills.py`; no install)
 6. `python scripts/pack_skill.py <name>` only when uploading a zip
 
 One directory = one job. New public skills must be named `tong-<job>`.
@@ -68,6 +68,8 @@ One directory = one job. New public skills must be named `tong-<job>`.
 
 ```bash
 python scripts/new_skill.py tong-name
-python scripts/validate_skills.py
+python scripts/test_skills.py
+python scripts/test_skills.py tong-git
+python scripts/run_skill.py tong-cover --list
 python scripts/pack_skill.py tong-chart
 ```

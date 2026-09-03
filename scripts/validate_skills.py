@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import re
 import subprocess
 import sys
@@ -142,14 +143,36 @@ def run_tests(skill_dir: Path, errors: list[str]) -> None:
         fail(errors, f"{skill_dir.name}: tests failed")
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Validate skills in this checkout. Does not install them."
+    )
+    parser.add_argument(
+        "skill",
+        nargs="?",
+        help="only this skills/<name>/ folder (default: all)",
+    )
+    args = parser.parse_args(argv)
+
     root = repo_root()
     errors: list[str] = []
-    check_no_stray_skill_md(root, errors)
-    dirs = list_skill_dirs(root)
-    if not dirs:
-        fail(errors, "no skills found under skills/")
-    names = {path.name for path in dirs}
+    if args.skill:
+        check_no_stray_skill_md(root, errors)
+        dirs = [root / "skills" / args.skill]
+        if not dirs[0].is_dir():
+            fail(errors, f"unknown skill {args.skill!r}")
+            print("validate failed:", file=sys.stderr)
+            for item in errors:
+                print(f"  - {item}", file=sys.stderr)
+            return 1
+        names = {args.skill}
+    else:
+        check_no_stray_skill_md(root, errors)
+        dirs = list_skill_dirs(root)
+        if not dirs:
+            fail(errors, "no skills found under skills/")
+        names = {path.name for path in dirs}
+
     for skill_dir in dirs:
         skill_md = skill_dir / "SKILL.md"
         if not skill_md.is_file():
@@ -162,7 +185,8 @@ def main() -> int:
             continue
         check_skill(meta, errors)
         run_tests(skill_dir, errors)
-    check_catalog(root, names, errors)
+    if not args.skill:
+        check_catalog(root, names, errors)
 
     if errors:
         print("validate failed:", file=sys.stderr)
