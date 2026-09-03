@@ -1,0 +1,7 @@
+A mythical bird Bifang from Shan Hai Jing, standing on a burning ancient pine tree,
+one leg, red feathers with intricate golden patterns, emitting flames from its beak,
+ancient forest background, misty, lava cracks, floating rune stones,
+Chinese traditional Gongbi painting combined with hyper-realism,
+Wu Daozi line feeling, thick oil painting texture, 8k resolution,
+volumetric light, Tyndall effect, subsurface scattering on feathers, dramatic shadows
+--ar 16:9 --stylize 250 --q 2 --v 6.0 --no cartoon, 3d render, cute, disney style, plastic

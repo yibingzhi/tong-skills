@@ -1,0 +1,8 @@
+lane: image
+target: generic
+look: cine
+anchor: Bifang, one-legged, burning pine
+
+prompt:
+Bifang, a one-legged crimson bird on a burning pine, late-sun backlight through
+woodsmoke, still frame, dark forest around the fire. No gongbi, no cartoon.

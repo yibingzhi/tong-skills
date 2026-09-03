@@ -1,20 +1,23 @@
 ---
 name: tong-humanize
 description: >-
-  Rewrite Chinese or mixed text to remove AI writing tells: fake contrasts,
-  filler transitions, stacked adverbs, empty jargon, WeChat punctuation.
-  Use when the user asks 去AI味, 降AI味, 润色, 改写得更自然, 像人话, 口语化,
-  humanize, 去塑料味, or tong-humanize.
+  Write or rewrite Chinese articles so they pass a humanize gate: no fake
+  contrasts, filler transitions, stacked adverbs, empty jargon, WeChat
+  punctuation. Use when the user asks 写文章, 写一篇, 公众号稿, 公众号文章,
+  小红书文案, 写速览, 写简报, 去AI味, 润色, 像人话, humanize, or tong-humanize.
+  Do not use for code, README, commit messages, or cover images.
 license: MIT
 compatibility: Requires Python 3.10+. Works on macOS, Windows, and Linux.
 metadata:
-  version: "0.2"
+  version: "0.3"
   author: TongSkills
 ---
 
 # Tong Humanize
 
-改「怎么说」，不改「说什么」。不换作者声音，不补原文没有的事实。
+写文章就用这套。去 AI 味是交稿门禁，不是用户口头令。
+
+改「怎么说」，不改「说什么」。不换作者声音，不补没有来处的事实。
 
 目标不是更华丽，是具体、可读、像这个人会说的话。无菌腔和套话一样假。
 
@@ -24,19 +27,23 @@ metadata:
 
 Copy this checklist. `<skill-dir>` is the folder that contains this `SKILL.md`. If `python3` is missing, use `py -3`.
 
-1. **定栏目。** 判断不了就问一句，别猜。
+1. **定栏目。** 判断不了就问一句，别猜。写文章没说发哪，不要默认 `general`。
 
 | 用户说法 | `--lane` |
 |---|---|
-| 去AI味 / 润色 / 没说栏目 | `general` |
-| 公众号长文 / 主号 | `wechat` |
-| 每日速览 / 简报 | `brief` |
+| 公众号 / 主号 / 长文 | `wechat` |
+| 每日速览 / 简报正文 / 写速览 | `brief` |
 | 小红书 / 小绿书 | `xhs` |
+| 去AI味 / 润色 / 没说栏目 | `general` |
+| 写文章 / 写一篇 / 没说发哪 | 问一句栏目 |
 
-2. **先扫再改。** 把待改文本写成文件（用户已有文件就用原路径）：
+2. **有稿就改，没稿就写。** 用户贴了原文或给了文件 → 先扫再改。用户要写一篇 → 按硬规则直接写，写完再扫。不要先交一版塑料稿等人说「去AI味」。
+
+用户已有文件就扫原路径；对话里写/改则走 stdin，不要为了扫描建 `tmp/`：
 
 ```bash
-python3 "<skill-dir>/scripts/scan.py" path/to/draft.md --lane general
+python3 "<skill-dir>/scripts/scan.py" path/to/draft.md --lane wechat
+python3 "<skill-dir>/scripts/scan.py" - --lane wechat
 ```
 
 `--list` 看栏目和检查项。输出分两档：
@@ -48,7 +55,7 @@ python3 "<skill-dir>/scripts/scan.py" path/to/draft.md --lane general
 
 WARN 不是让你顺手删。「我爱上的不是容貌，而是你说话的方式」是好句子；「温控闭环」是术语。删了才是改坏。
 
-3. **按档位改。** FAIL 当硬伤。没命中的句子尽量不动。
+3. **按档位改。** 改稿时 FAIL 当硬伤，没命中的句子尽量不动。从零写没有「原文句子」，扫到 FAIL 再修，不要为了过门禁把稿子写空。
 
 | 档位 | 怎么判 | 改多深 |
 |---|---|---|
@@ -56,14 +63,14 @@ WARN 不是让你顺手删。「我爱上的不是容貌，而是你说话的方
 | 中度 | 套话 + 三毒 + 连接词成片 | 再去书面腔 |
 | 重度 | 整段在演深刻 | 重写病灶段，其余仍少动 |
 
-4. **再扫。** 同一文件改完必须再跑一遍，直到退出 0，或第 3 轮仍 ≥10 处 FAIL 则标 `[需复核]` 并停。
-5. **交稿。** 正文 + 最后一次扫描原文 + 每条 WARN 的去留（一句话一条）。用户没要质检表就不要再做一层报告。
+4. **再扫。** 改完必须再跑一遍，直到退出 0，或第 3 轮仍 ≥10 处 FAIL 则标 `[需复核]` 并停。
+5. **交稿。** 正文 + 最后一次扫描原文 + 每条 WARN 的去留（一句话一条）。用户没要质检表就不要再做一层报告。从零写的交付物是对话里的正文，用户没说存文件就不要落盘。
 
 ## 硬规则
 
 1. **跑 bundled 脚本。** 不要手写另一份禁用词表来「代替扫描」。
-2. **不新增事实。** 数字必须来自原文或用户；查不到的「某报告 / NASA 算了一笔账」直接删。原文只有空话没有数，就改成「具体数我这边没有」，不要照范例补一个「两天到四小时」。
-3. **不换人。** `general` 只去塑料味，不灌口癖。用户明确要口语化 / 公众号口吻，才用更松的句子。
+2. **不新增事实。** 数字必须来自原文、用户或你刚跑过的命令。从零写也一样：查不到的「某报告 / NASA 算了一笔账」不要编。没有数就写轻（「不少 / 一大截」），或写「具体数我这边没有」，不要照范例补一个「两天到四小时」。
+3. **不换人。** `general` 只去塑料味，不灌口癖。从零写也先像作者，不要先写成网红再往回收。用户明确要口语化 / 公众号口吻，才用更松的句子。
 4. **不喊话收尾。** 「放话了 / 欢迎打脸 / 回来谢我 / 点个在看」整段删。说完就停。
 5. **自嘲可以，吹牛不行。** 不写没跑过的「轻松搞定」「效率翻倍」。
 

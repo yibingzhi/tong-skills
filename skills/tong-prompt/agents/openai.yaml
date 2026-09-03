@@ -1,0 +1,10 @@
+interface:
+  display_name: "Tong Prompt"
+  short_description: "引导作者把想法写成可粘贴的图/视频提示词，先锁锚点再扫塑料词"
+  default_prompt: >-
+    Use $tong-prompt to lock the author's 3-second recognizability anchor,
+    ask at most one missing look/motion fork, paste a ready-to-copy prompt,
+    and run scripts/scan.py on stdin. Do not write a tmp file unless asked.
+    Do not swap their intended look. Do not call image APIs.
+policy:
+  allow_implicit_invocation: true

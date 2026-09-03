@@ -11,9 +11,10 @@ Skill 素材库。格式遵循 [Agent Skills](https://agentskills.io/specificati
 | [tong-chart](skills/tong-chart/) | 本地 Mermaid 出图（流程 / 架构 / 时序 / 甘特等），多主题，macOS · Windows · Linux |
 | [tong-cover](skills/tong-cover/) | 本地 Pillow 封面 / 刊头 / 简报 / 金句卡，按星期换色 |
 | [tong-git](skills/tong-git/) | 项目仓状态 → 按需提交 → 推到 Gitee / GitHub / CNB |
-| [tong-humanize](skills/tong-humanize/) | 去 AI 味改写：扫描套话 / 三毒 / 标点，按栏目交稿 |
+| [tong-humanize](skills/tong-humanize/) | 写文章或去 AI 味：扫描套话 / 三毒 / 标点，按栏目交稿 |
 | [tong-mysql-ro](skills/tong-mysql-ro/) | 只读 MySQL：SELECT / SHOW / DESCRIBE，强制 LIMIT，凭证本地填 |
 | [tong-mysql-write](skills/tong-mysql-write/) | 写库 DML：默认预览，确认后 `--apply` 并落回滚 SQL；不做 DDL |
+| [tong-prompt](skills/tong-prompt/) | 引导作者把想法写成可粘贴的图 / 视频提示词，先锁锚点再扫塑料词 |
 
 ## 安装
 
@@ -25,6 +26,7 @@ npx skills add https://gitee.com/yibingzhi/tong-skills.git --skill tong-git
 npx skills add https://gitee.com/yibingzhi/tong-skills.git --skill tong-humanize
 npx skills add https://gitee.com/yibingzhi/tong-skills.git --skill tong-mysql-ro
 npx skills add https://gitee.com/yibingzhi/tong-skills.git --skill tong-mysql-write
+npx skills add https://gitee.com/yibingzhi/tong-skills.git --skill tong-prompt
 ```
 
 短名 `owner/repo` 只走 GitHub，Gitee 必须用完整 git URL。仓库需公开。
@@ -73,9 +75,9 @@ python scripts/pack_skill.py tong-cover
 python playground/server.py
 ```
 
-打开 http://127.0.0.1:8765 。**默认是「跑脚本」**，不用 API Key、不调大模型：选 skill、点预设（`--list` / `status`），直接跑 bundled CLI。`skills/` 里新加的会自动出现。默认禁止 commit/push；要测写操作再勾「允许写操作」。
+打开 http://127.0.0.1:8765 。**默认是「跑脚本」**：选 skill，把 `--help` 里的参数填进表，点运行。预设只填表，不自动跑。默认禁止 commit/push；要测写操作再勾「允许写操作」。
 
-「对话测 SKILL.md」才是可选的第二层：把 SKILL.md 当系统提示词丢给任意 OpenAI 兼容接口，看模型会不会按流程办事。日常验收仍以 `test_skills.py` + 跑脚本为准。
+「对话测 SKILL.md」才是可选的第二层：把 SKILL.md 当系统提示词丢给任意 OpenAI 兼容接口。DeepSeek 的深度思考在 `reasoning_content`，测页默认不打印（可勾「显示深度思考」）。日常验收仍以 `test_skills.py` + 跑脚本为准。
 
 ## License
 

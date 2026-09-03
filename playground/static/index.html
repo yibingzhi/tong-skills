@@ -218,11 +218,16 @@
     }
     main {
       display: grid;
-      grid-template-rows: auto auto 1fr auto;
+      grid-template-rows: auto auto auto 1fr auto;
       min-width: 0;
       min-height: 0;
       padding: 8px;
     }
+    body.mode-script .composer,
+    body.mode-script #log { display: none; }
+    body.mode-chat #params,
+    body.mode-chat .presets,
+    body.mode-chat #stdout { display: none; }
     header.top {
       display: flex;
       justify-content: space-between;
@@ -264,6 +269,59 @@
       cursor: pointer;
     }
     .presets button:hover { background: var(--gold-dim); }
+    .params {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 12px 16px;
+      padding: 0 26px 8px;
+    }
+    .params label.param {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      min-width: 0;
+    }
+    .params label.param.flag {
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+    .params .param-name {
+      font: 11px var(--mono);
+      color: var(--gold);
+      letter-spacing: 0.04em;
+    }
+    .params .param-help {
+      font: 11px/1.4 var(--sans);
+      color: var(--dim);
+    }
+    .params input[type="text"],
+    .params select {
+      width: 100%;
+      background: var(--bg-2);
+      border: 1px solid var(--line);
+      color: var(--ink);
+      font: 13px var(--mono);
+      padding: 8px 10px;
+    }
+    .params .params-actions {
+      grid-column: 1 / -1;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .params .params-actions .send {
+      height: 40px;
+      min-width: 96px;
+    }
+    #cmd-preview {
+      font: 12px var(--mono);
+      color: var(--muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
     .stage {
       min-height: 0;
       margin: 0 18px;
@@ -272,8 +330,8 @@
         linear-gradient(180deg, rgba(255,255,255,0.02), transparent 18%),
         var(--bg-2);
       overflow: hidden;
-      display: grid;
-      grid-template-rows: auto 1fr;
+      display: flex;
+      flex-direction: column;
     }
     .stage-bar {
       display: flex;
@@ -285,6 +343,8 @@
       letter-spacing: 0.2em;
     }
     .log {
+      flex: 1;
+      min-height: 0;
       overflow: auto;
       padding: 18px 20px;
       font: 12.5px/1.6 var(--mono);
@@ -300,6 +360,11 @@
     }
     .bubble.user { border-left-color: var(--gold); }
     .bubble.tool { border-left-color: var(--vermilion); color: #d8d0c2; }
+    .bubble.think {
+      border-left-color: var(--dim);
+      color: var(--dim);
+      font-size: 12px;
+    }
     .bubble-head {
       display: flex;
       justify-content: space-between;
@@ -356,7 +421,7 @@
         <button type="button" id="tab-script" aria-pressed="true">跑脚本</button>
         <button type="button" id="tab-chat" aria-pressed="false">对话测</button>
       </div>
-      <p class="aside-hint" id="mode-hint">默认不调模型。选 skill，点预设，直接跑本机 CLI。</p>
+      <p class="aside-hint" id="mode-hint">默认不调模型。选 skill，按参数表填，点运行。</p>
       <div class="llm">
         <label class="field" for="base">Base URL</label>
         <input id="base" type="text" spellcheck="false" placeholder="https://api.deepseek.com">
@@ -367,6 +432,7 @@
         <div class="toggles">
           <label><input id="tools" type="checkbox" checked> 对话时允许调本机脚本</label>
           <label><input id="refs" type="checkbox"> 把 references 塞进上下文</label>
+          <label><input id="think" type="checkbox"> 显示深度思考</label>
         </div>
       </div>
       <div class="toggles">
@@ -386,11 +452,13 @@
           <small id="meta">127.0.0.1 · 8765</small>
         </div>
       </header>
+      <div class="params" id="params"></div>
       <div class="presets" id="presets"></div>
       <div class="stage">
-        <div class="stage-bar"><span>CONSOLE</span><span>STDOUT</span></div>
+        <div class="stage-bar"><span id="stage-left">STDOUT</span><span id="stage-cmd"></span></div>
+        <pre class="log" id="stdout"></pre>
         <div class="log" id="log">
-          <p class="hint">先点左边的 skill。默认「跑脚本」：不用 Key，直接执行 bundled CLI。想看模型会不会按 SKILL.md 办事，再切到「对话测」。</p>
+          <p class="hint">先点左边的 skill。跑脚本填参数表；对话测才走大模型。</p>
         </div>
       </div>
       <p class="warn" id="warn" hidden>写操作会真的提交/推送，默认请关掉。</p>
@@ -403,7 +471,7 @@
   <script>
     const $ = (id) => document.getElementById(id);
     const state = { skills: [], current: null, messages: [], mode: "script" };
-    const ROLE = { user: "IN", tool: "OUT", assistant: "NOTE" };
+    const ROLE = { user: "IN", tool: "OUT", assistant: "NOTE", think: "THINK" };
 
     function tick() {
       $("clock").textContent = new Date().toLocaleTimeString("zh-CN", { hour12: false });
@@ -415,13 +483,15 @@
       $("base").value = localStorage.getItem("tong-lab-base") || "https://api.deepseek.com";
       $("model").value = localStorage.getItem("tong-lab-model") || "deepseek-chat";
       $("key").value = sessionStorage.getItem("tong-lab-key") || "";
+      $("think").checked = localStorage.getItem("tong-lab-think") === "1";
     }
     function saveSettings() {
       localStorage.setItem("tong-lab-base", $("base").value.trim());
       localStorage.setItem("tong-lab-model", $("model").value.trim());
       sessionStorage.setItem("tong-lab-key", $("key").value.trim());
+      localStorage.setItem("tong-lab-think", $("think").checked ? "1" : "0");
     }
-    ["base", "model", "key"].forEach((id) => $(id).addEventListener("change", saveSettings));
+    ["base", "model", "key", "think"].forEach((id) => $(id).addEventListener("change", saveSettings));
     $("write").addEventListener("change", () => { $("warn").hidden = !$("write").checked; });
 
     function setMode(mode) {
@@ -431,14 +501,209 @@
       $("tab-chat").setAttribute("aria-pressed", mode === "chat" ? "true" : "false");
       $("send").textContent = mode === "chat" ? "问模型" : "运行";
       $("mode-hint").textContent = mode === "chat"
-        ? "这一层才走大模型。Key 只留在浏览器，不写磁盘。"
-        : "默认不调模型。选 skill，点预设，直接跑本机 CLI。";
+        ? "这一层才走大模型。Key 只留在浏览器。DeepSeek 的思考默认不打印，要看再勾「显示深度思考」。"
+        : "不调模型。左边选 skill，把参数填进表，点运行。预设只填表，不自动跑。";
       $("prompt").placeholder = mode === "chat"
         ? "例如：出一张 3:4 小红书封面，标题每日速览"
         : "脚本参数，例如 --list";
+      $("stage-left").textContent = mode === "chat" ? "CONSOLE" : "STDOUT";
+      if (mode === "script") updateCmdPreview();
     }
     $("tab-script").onclick = () => setMode("script");
     $("tab-chat").onclick = () => setMode("chat");
+
+    function splitArgv(text) {
+      const out = [];
+      const re = /"([^"]*)"|'([^']*)'|(\S+)/g;
+      let match;
+      while ((match = re.exec(text || ""))) out.push(match[1] || match[2] || match[3]);
+      return out;
+    }
+
+    function quoteTok(tok) {
+      return /[\s"]/.test(tok) ? '"' + tok.replace(/"/g, '\\"') + '"' : tok;
+    }
+
+    function cliFields() {
+      return (state.current && state.current.cli && state.current.cli.fields) || [];
+    }
+
+    function collectArgv() {
+      const argv = [];
+      cliFields().forEach((field) => {
+        const el = document.querySelector('[data-param="' + field.id + '"]');
+        if (!el) return;
+        if (field.kind === "flag") {
+          if (el.checked) argv.push((field.flags || [])[0]);
+          return;
+        }
+        const value = (el.value || "").trim();
+        if (!value) return;
+        if (field.positional) argv.push(value);
+        else argv.push((field.flags || []).slice(-1)[0], value);
+      });
+      const extra = $("param-extra") ? ($("param-extra").value || "").trim() : "";
+      if (extra) argv.push.apply(argv, splitArgv(extra));
+      return argv.filter(Boolean);
+    }
+
+    function updateCmdPreview() {
+      const argv = collectArgv();
+      const entry = (state.current && state.current.entry) || "script";
+      $("stage-cmd").textContent = [entry].concat(argv).join(" ");
+      const preview = $("cmd-preview");
+      if (preview) preview.textContent = argv.length ? argv.map(quoteTok).join(" ") : "（未填参数）";
+    }
+
+    function fillParams(argvStr) {
+      const tokens = splitArgv(argvStr);
+      const fields = cliFields();
+      const byFlag = {};
+      const positionals = [];
+      fields.forEach((field) => {
+        const el = document.querySelector('[data-param="' + field.id + '"]');
+        if (!el) return;
+        if (field.kind === "flag") el.checked = false;
+        else el.value = "";
+        (field.flags || []).forEach((flag) => { byFlag[flag] = field; });
+        if (field.positional) positionals.push(field);
+      });
+      if ($("param-extra")) $("param-extra").value = "";
+      const leftover = [];
+      let pos = 0;
+      for (let i = 0; i < tokens.length; i++) {
+        const tok = tokens[i];
+        const field = byFlag[tok];
+        if (field) {
+          const el = document.querySelector('[data-param="' + field.id + '"]');
+          if (field.kind === "flag") el.checked = true;
+          else if (i + 1 < tokens.length && !String(tokens[i + 1]).startsWith("-")) {
+            i += 1;
+            el.value = tokens[i];
+          }
+          continue;
+        }
+        if (pos < positionals.length && !String(tok).startsWith("-")) {
+          document.querySelector('[data-param="' + positionals[pos].id + '"]').value = tok;
+          pos += 1;
+          continue;
+        }
+        leftover.push(tok);
+      }
+      if ($("param-extra") && leftover.length) {
+        $("param-extra").value = leftover.map(quoteTok).join(" ");
+      }
+      updateCmdPreview();
+    }
+
+    function renderParams(skill) {
+      const box = $("params");
+      box.replaceChildren();
+      if (!skill.entry) {
+        const empty = document.createElement("p");
+        empty.className = "param-help";
+        empty.textContent = "这个 skill 没有 bundled 脚本。";
+        box.appendChild(empty);
+        return;
+      }
+      const usage = document.createElement("p");
+      usage.className = "param-help";
+      usage.style.gridColumn = "1 / -1";
+      usage.textContent = (skill.cli && skill.cli.usage) || "";
+      box.appendChild(usage);
+      (skill.cli && skill.cli.fields || []).forEach((field) => {
+        const lab = document.createElement("label");
+        lab.className = "param" + (field.kind === "flag" ? " flag" : "");
+        const name = document.createElement("span");
+        name.className = "param-name";
+        name.textContent = field.positional
+          ? field.id
+          : ((field.flags || []).join(" ") || field.id);
+        let input;
+        if (field.kind === "flag") {
+          input = document.createElement("input");
+          input.type = "checkbox";
+        } else if (field.kind === "choice") {
+          input = document.createElement("select");
+          const blank = document.createElement("option");
+          blank.value = "";
+          blank.textContent = field.positional ? "选命令" : "默认";
+          input.appendChild(blank);
+          (field.choices || []).forEach((choice) => {
+            const opt = document.createElement("option");
+            opt.value = choice;
+            opt.textContent = choice;
+            input.appendChild(opt);
+          });
+        } else {
+          input = document.createElement("input");
+          input.type = "text";
+          input.placeholder = field.metavar || "";
+          input.spellcheck = false;
+        }
+        input.dataset.param = field.id;
+        input.addEventListener("input", updateCmdPreview);
+        input.addEventListener("change", updateCmdPreview);
+        const help = document.createElement("span");
+        help.className = "param-help";
+        help.textContent = field.help || "";
+        if (field.kind === "flag") lab.append(input, name, help);
+        else lab.append(name, input, help);
+        box.appendChild(lab);
+      });
+      const extraLab = document.createElement("label");
+      extraLab.className = "param";
+      extraLab.style.gridColumn = "1 / -1";
+      const extraName = document.createElement("span");
+      extraName.className = "param-name";
+      extraName.textContent = "其余参数";
+      const extra = document.createElement("input");
+      extra.type = "text";
+      extra.id = "param-extra";
+      extra.placeholder = "没有单独格子的参数写这里，例如 -m \"commit message\"";
+      extra.spellcheck = false;
+      extra.addEventListener("input", updateCmdPreview);
+      const extraHelp = document.createElement("span");
+      extraHelp.className = "param-help";
+      extraHelp.textContent = "不会自动跑。填完点运行。";
+      extraLab.append(extraName, extra, extraHelp);
+      box.appendChild(extraLab);
+      const actions = document.createElement("div");
+      actions.className = "params-actions";
+      const run = document.createElement("button");
+      run.type = "button";
+      run.className = "send";
+      run.textContent = "运行";
+      run.addEventListener("click", runScript);
+      const preview = document.createElement("span");
+      preview.id = "cmd-preview";
+      actions.append(run, preview);
+      box.appendChild(actions);
+      updateCmdPreview();
+    }
+
+    async function runScript() {
+      if (!state.current || !state.current.entry) return;
+      const argv = collectArgv();
+      $("stage-cmd").textContent = argv.join(" ");
+      $("stdout").textContent = "运行中…";
+      try {
+        const res = await fetch("/api/run", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            skill: state.current.name,
+            argv: argv,
+            allow_write: $("write").checked,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || res.statusText);
+        $("stdout").textContent = data.output || "(无输出)";
+      } catch (err) {
+        $("stdout").textContent = String(err.message || err);
+      }
+    }
 
     function addBubble(role, text, name) {
       const hint = $("log").querySelector(".hint");
@@ -465,10 +730,7 @@
         const btn = document.createElement("button");
         btn.type = "button";
         btn.textContent = item.label;
-        btn.onclick = () => {
-          $("prompt").value = item.argv;
-          $("form").requestSubmit();
-        };
+        btn.onclick = () => fillParams(item.argv);
         $("presets").appendChild(btn);
       });
     }
@@ -477,6 +739,7 @@
       state.current = skill;
       state.messages = [];
       $("log").replaceChildren();
+      $("stdout").textContent = "";
       $("title").textContent = skill.name;
       $("meta").textContent = [
         skill.entry || "无脚本",
@@ -487,8 +750,11 @@
       document.querySelectorAll(".skill").forEach((btn) => {
         btn.setAttribute("aria-pressed", btn.dataset.name === skill.name ? "true" : "false");
       });
+      renderParams(skill);
       renderPresets(skill);
-      addBubble("assistant", "测 " + skill.name + "。跑脚本不用 Key；对话才会调用大模型。");
+      if (state.mode === "chat") {
+        addBubble("assistant", "测 " + skill.name + "。跑脚本填参数表；对话才会调用大模型。");
+      }
     }
 
     async function loadSkills() {
@@ -530,26 +796,7 @@
       const text = $("prompt").value.trim();
       if (!state.current) return;
       if (state.mode === "script") {
-        addBubble("user", text || "(无参数)");
-        $("send").disabled = true;
-        try {
-          const res = await fetch("/api/run", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              skill: state.current.name,
-              argv: text,
-              allow_write: $("write").checked,
-            }),
-          });
-          const data = await res.json();
-          if (!res.ok) throw new Error(data.error || res.statusText);
-          addBubble("tool", data.output, (data.argv || []).join(" "));
-        } catch (err) {
-          addBubble("tool", String(err.message || err));
-        } finally {
-          $("send").disabled = false;
-        }
+        runScript();
         return;
       }
       if (!text) return;
@@ -587,9 +834,22 @@
             const fn = call.function || {};
             return fn.name + " " + (fn.arguments || "");
           }).join("\n");
-          const body = [item.content, calls].filter(Boolean).join("\n");
-          if (body) addBubble("assistant", body);
-          if (item.content) state.messages.push({ role: "assistant", content: item.content });
+          const reasoning = item.reasoning_content || "";
+          const content = item.content || "";
+          const hasCalls = Boolean((item.tool_calls || []).length);
+          if (calls) addBubble("tool", calls, "tool_call");
+          const thinkBits = hasCalls
+            ? [reasoning, content].filter(Boolean).join("\n\n")
+            : reasoning;
+          if (thinkBits && $("think").checked) addBubble("think", thinkBits);
+          if (!hasCalls && content) addBubble("assistant", content);
+          if (!hasCalls && (content || reasoning)) {
+            state.messages.push({
+              role: "assistant",
+              content: content,
+              reasoning_content: reasoning,
+            });
+          }
         });
       } catch (err) {
         addBubble("tool", String(err.message || err));

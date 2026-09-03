@@ -17,6 +17,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
 
+from cli_help import parse_argparse_help
+
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
@@ -72,8 +74,50 @@ PRESETS = {
             "argv": "skills/tong-humanize/tests/fixtures/clean.md --lane brief --rules skills/tong-humanize/tests/fixtures/house-rules.txt",
         },
     ],
+    "tong-prompt": [
+        {"label": "--list", "argv": "--list"},
+        {
+            "label": "扫塑料样稿",
+            "argv": "skills/tong-prompt/tests/fixtures/slop.txt --lane image --target mj",
+        },
+        {
+            "label": "扫整理后毕方",
+            "argv": 'skills/tong-prompt/tests/fixtures/clean.txt --anchor "one-legged,burning ancient pine"',
+        },
+    ],
 }
 MAX_OUTPUT = 80_000
+_CLI_CACHE: dict[str, dict] = {}
+
+
+def describe_cli(skill_dir: Path) -> dict:
+    cached = _CLI_CACHE.get(skill_dir.name)
+    if cached is not None:
+        return cached
+    empty = {"usage": "", "fields": []}
+    try:
+        script = skill_entry_script(skill_dir)
+    except (FileNotFoundError, ValueError):
+        _CLI_CACHE[skill_dir.name] = empty
+        return empty
+    result = subprocess.run(
+        [sys.executable, str(script), "--help"],
+        cwd=str(ROOT),
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        timeout=12,
+    )
+    text = (result.stdout or "") + (result.stderr or "")
+    usage = ""
+    for line in text.splitlines():
+        if line.strip():
+            usage = line.strip()
+            break
+    payload = {"usage": usage, "fields": parse_argparse_help(text)}
+    _CLI_CACHE[skill_dir.name] = payload
+    return payload
 
 
 def json_bytes(data: object, status: int = 200) -> tuple[int, bytes, str]:
@@ -102,6 +146,7 @@ def skill_payload(skill_dir: Path) -> dict:
         "presets": PRESETS.get(skill_dir.name) or (
             [{"label": "--help", "argv": "--help"}] if entry else []
         ),
+        "cli": describe_cli(skill_dir),
     }
 
 
@@ -133,6 +178,61 @@ def completions_url(base: str) -> str:
     if text.endswith("/v1"):
         return text + "/chat/completions"
     return text + "/v1/chat/completions"
+
+
+def uses_deepseek(base: str, model: str) -> bool:
+    return "deepseek" in f"{base} {model}".lower()
+
+
+def reasoning_text(message: dict) -> str:
+    """DeepSeek thinking mode: CoT is reasoning_content, not content."""
+    raw = message.get("reasoning_content")
+    if raw is None:
+        raw = message.get("reasoning")
+    if isinstance(raw, dict):
+        raw = raw.get("content") or raw.get("text") or ""
+    return str(raw or "")
+
+
+def assistant_from_api(message: dict) -> dict:
+    calls = message.get("tool_calls") or []
+    if not isinstance(calls, list):
+        calls = []
+    return {
+        "role": "assistant",
+        "content": str(message.get("content") or ""),
+        "reasoning_content": reasoning_text(message),
+        "tool_calls": calls,
+    }
+
+
+def assistant_for_api(item: dict, *, include_reasoning: bool) -> dict:
+    """Replay an assistant turn. DeepSeek + tools requires reasoning_content."""
+    out: dict = {
+        "role": "assistant",
+        "content": str(item.get("content") or ""),
+    }
+    reasoning = reasoning_text(item)
+    if include_reasoning and reasoning:
+        out["reasoning_content"] = reasoning
+    calls = item.get("tool_calls") or []
+    if calls:
+        out["tool_calls"] = calls
+    return out
+
+
+def llm_payload(model: str, messages: list, *, tools: list | None, base: str) -> dict:
+    payload: dict = {"model": model, "messages": messages}
+    if tools:
+        payload["tools"] = tools
+    if uses_deepseek(base, model):
+        # Official thinking-mode toggle. CoT returns on reasoning_content.
+        # temperature/top_p have no effect in thinking mode — omit them.
+        payload["thinking"] = {"type": "enabled"}
+        payload["reasoning_effort"] = "high"
+    else:
+        payload["temperature"] = 0.2
+    return payload
 
 
 def openai_chat(base: str, key: str, payload: dict) -> dict:
@@ -242,6 +342,9 @@ def system_prompt(info: dict, include_refs: bool) -> str:
         f"skill-dir is `{skill_dir.as_posix()}`.",
         "Follow SKILL.md. Prefer the bundled script over regenerating it.",
         "If tools are available, call run_skill_script with argv only.",
+        "User-visible content is only the reply to the human: the question, "
+        "the paste-ready prompt, or the result. Do not narrate SKILL.md, do not "
+        "explain the workflow, do not preface tool calls in content.",
         "Do not print API keys. Do not invent git remotes.",
         "",
         info["skill_md"],
@@ -275,30 +378,28 @@ def chat_loop(body: dict) -> dict:
     ]
     for item in history:
         role = item.get("role")
-        if role not in {"user", "assistant"}:
-            continue
-        messages.append({"role": role, "content": str(item.get("content") or "")})
+        if role == "user":
+            messages.append({"role": "user", "content": str(item.get("content") or "")})
+        elif role == "assistant":
+            messages.append(assistant_for_api(item, include_reasoning=use_tools and uses_deepseek(base, model)))
     trace: list[dict] = []
     for _ in range(MAX_ROUNDS):
-        payload: dict = {"model": model, "messages": messages, "temperature": 0.2}
-        if use_tools:
-            payload["tools"] = tools_schema()
+        payload = llm_payload(
+            model,
+            messages,
+            tools=tools_schema() if use_tools else None,
+            base=base,
+        )
         data = openai_chat(base, key, payload)
         choice = (data.get("choices") or [{}])[0]
         message = choice.get("message") or {}
-        tool_calls = message.get("tool_calls") or []
-        content = message.get("content") or ""
-        trace.append(
-            {
-                "role": "assistant",
-                "content": content,
-                "tool_calls": tool_calls,
-            }
-        )
-        if not tool_calls:
+        packed = assistant_from_api(message)
+        trace.append(packed)
+        if not packed["tool_calls"]:
             return {"trace": trace}
-        messages.append(message)
-        for call in tool_calls:
+        replay = assistant_for_api(packed, include_reasoning=uses_deepseek(base, model))
+        messages.append(replay)
+        for call in packed["tool_calls"]:
             fn = (call.get("function") or {})
             fn_name = fn.get("name") or ""
             try:
@@ -386,8 +487,11 @@ class Handler(BaseHTTPRequestHandler):
                 skill_dir = ROOT / "skills" / name
                 if not skill_dir.is_dir():
                     raise ValueError(f"unknown skill {name}")
-                raw = str(body.get("argv") or "").strip()
-                argv = shlex.split(raw, posix=True)
+                raw = body.get("argv")
+                if isinstance(raw, list):
+                    argv = [str(item) for item in raw]
+                else:
+                    argv = shlex.split(str(raw or "").strip(), posix=True)
                 output = run_skill_script(
                     skill_dir, argv, bool(body.get("allow_write"))
                 )

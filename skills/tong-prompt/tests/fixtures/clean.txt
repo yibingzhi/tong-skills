@@ -1,0 +1,19 @@
+lane: image
+target: mj
+look: gongbi
+anchor: Bifang, one-legged, burning ancient pine, flame from the open beak
+
+prompt:
+Bifang (毕方) from the Shan Hai Jing: a one-legged crimson fire-bird
+perched on a burning ancient pine, trunk charred, needles still on fire.
+Red feathers with fine gold filigree, a thin jet of flame from the open beak.
+Primeval mountain forest, thin mist, dull lava glow in ground cracks.
+Style: Chinese gongbi bird-and-flower on silk, Wu Daozi flying-line in the plumage,
+mineral pigments, reserved gold. Not oil paint, not photoreal CGI.
+Light: one shaft of late sun through smoke; forest around it stays dark.
+
+negative:
+cartoon, 3d render, cute, disney, plastic, extra legs, extra wings
+
+params:
+--ar 16:9 --stylize 250 --q 2 --v 6.0

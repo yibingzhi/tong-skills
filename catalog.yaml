@@ -18,7 +18,7 @@ skills:
     tags: git,gitee,github,cnb
   - name: tong-humanize
     status: draft
-    summary: 去 AI 味改写：扫描套话/三毒/标点，按栏目交稿
+    summary: 写文章或去 AI 味：扫描套话/三毒/标点，按栏目交稿
     tags: writing,wechat,humanize
   - name: tong-mysql-ro
     status: draft
@@ -28,3 +28,7 @@ skills:
     status: draft
     summary: 写库 DML：默认预览，确认后 --apply 并落回滚 SQL；不做 DDL
     tags: mysql,write,sql
+  - name: tong-prompt
+    status: draft
+    summary: 引导作者把想法写成可粘贴的图/视频提示词，先锁锚点再扫塑料词
+    tags: prompt,image,video
