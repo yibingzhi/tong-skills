@@ -46,6 +46,11 @@ skills:
     category: media
     summary: 引导作者把想法写成可粘贴的图/视频提示词，先锁锚点再扫塑料词
     tags: prompt,image,video
+  - name: tong-reverse
+    status: published
+    category: media
+    summary: AI 视频与图像提示词逆向解构：自动抽帧拼图/运镜与物理推测/可灵·Runway·海螺多模型方言转换
+    tags: reverse,video,prompt,deconstruct,kling,runway
 
   # ==========================================
   # 🛠️ 研发与基础设施 (DevOps & Data)
@@ -65,3 +70,4 @@ skills:
     category: dev
     summary: 写库 DML：默认预览，确认后 --apply 并落回滚 SQL；不做 DDL
     tags: mysql,write,sql
+

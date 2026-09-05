@@ -1,0 +1,8 @@
+interface:
+  display_name: "Tong Reverse"
+  short_description: "AI 视频与图像提示词逆向解构：自动抽帧拼图/运镜与物理推测/可灵·Runway·海螺多模型方言转换"
+  default_prompt: >-
+    Use $tong-reverse for this task. Follow SKILL.md. Prefer bundled scripts
+    over regenerating them.
+policy:
+  allow_implicit_invocation: true

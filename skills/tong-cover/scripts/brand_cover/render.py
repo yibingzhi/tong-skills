@@ -74,7 +74,17 @@ def resolve_size(ratio: str, layout: str = "editorial") -> tuple[int, int]:
     return RATIOS["4:3"]
 
 
-def wrap_title(draw, text: str, font, max_width: float, max_lines: int = 3) -> list[str]:
+class TextOverflowError(ValueError):
+    """The supplied text cannot fit without losing content."""
+
+
+def _check_lines(lines, max_lines):
+    if max_lines is not None and len(lines) > max_lines:
+        raise TextOverflowError("text overflow: split the content across images or shorten it explicitly")
+    return lines
+
+
+def wrap_title(draw, text: str, font, max_width: float, max_lines: int | None = 3) -> list[str]:
     if not text:
         return [""]
     if fonts.text_size(draw, text, font)[0] <= max_width:
@@ -92,7 +102,7 @@ def wrap_title(draw, text: str, font, max_width: float, max_lines: int = 3) -> l
                 cur = part
         if cur:
             lines.append(cur)
-        return lines[:max_lines] or [text]
+        return _check_lines(lines or [text], max_lines)
     lines, buf = [], ""
     for ch in text:
         trial = buf + ch
@@ -104,22 +114,21 @@ def wrap_title(draw, text: str, font, max_width: float, max_lines: int = 3) -> l
             buf = ch
     if buf:
         lines.append(buf)
-    return lines[:max_lines] or [text]
+    return _check_lines(lines or [text], max_lines)
 
 
 def fit_title(draw, text: str, kind: str, start_size: float, max_width: float, max_height: float, max_lines: int = 3):
     size = int(start_size)
     while size >= 18:
         font = fonts.load_font(kind, size)
-        lines = wrap_title(draw, text, font, max_width, max_lines=max_lines)
+        lines = wrap_title(draw, text, font, max_width, max_lines=None)
         line_h = fonts.text_size(draw, "国", font)[1]
         total_h = line_h * len(lines) * 1.22
         widest = max(fonts.text_size(draw, line, font)[0] for line in lines)
-        if widest <= max_width and total_h <= max_height:
+        if len(lines) <= max_lines and widest <= max_width and total_h <= max_height:
             return font, lines, line_h
         size -= 2
-    font = fonts.load_font(kind, 18)
-    return font, wrap_title(draw, text, font, max_width, max_lines=max_lines), fonts.text_size(draw, "国", font)[1]
+    raise TextOverflowError("title overflow at minimum font size: split the content across images")
 
 
 def _art(img: Image.Image, preset: Preset, layout: str, seed: int) -> Image.Image:
@@ -370,7 +379,7 @@ def _wrap_quote_tokens(
     tokens: list[tuple[str, bool]],
     font,
     max_width: float,
-    max_lines: int = 6,
+    max_lines: int | None = 6,
 ) -> list[list[tuple[str, bool]]]:
     chars: list[tuple[str, bool]] = []
     for text, is_hl in tokens:
@@ -401,10 +410,7 @@ def _wrap_quote_tokens(
                 lines.append(cur_line)
                 cur_line = [(ch, is_hl)]
 
-        if len(lines) >= max_lines:
-            break
-
-    if cur_line and len(lines) < max_lines:
+    if cur_line:
         lines.append(cur_line)
 
     merged_lines: list[list[tuple[str, bool]]] = []
@@ -417,7 +423,7 @@ def _wrap_quote_tokens(
                 merged.append((ch, is_hl))
         merged_lines.append(merged)
 
-    return merged_lines
+    return _check_lines(merged_lines, max_lines)
 
 
 def _fit_quote_tokens(
@@ -433,17 +439,17 @@ def _fit_quote_tokens(
     min_size = 20
     while size >= min_size:
         font = fonts.load_font(font_kind, size)
-        lines = _wrap_quote_tokens(draw, tokens, font, max_w, max_lines=max_lines)
+        lines = _wrap_quote_tokens(draw, tokens, font, max_w, max_lines=None)
         single_h = fonts.text_size(draw, "国", font)[1]
         line_height = single_h * 1.58
         total_h = line_height * len(lines)
-        if total_h <= max_h:
+        if len(lines) <= max_lines and total_h <= max_h and all(
+            fonts.text_size(draw, "".join(text for text, _ in line), font)[0] <= max_w
+            for line in lines
+        ):
             return font, lines, line_height, single_h
         size -= 2
-    font = fonts.load_font(font_kind, min_size)
-    lines = _wrap_quote_tokens(draw, tokens, font, max_w, max_lines=max_lines)
-    single_h = fonts.text_size(draw, "国", font)[1]
-    return font, lines, single_h * 1.58, single_h
+    raise TextOverflowError("quote overflow at minimum font size: split the quote across images")
 
 
 def _quote_date_str(brief: CoverBrief) -> tuple[str, str]:
@@ -804,7 +810,7 @@ def _render_quote_highlight(brief: CoverBrief, preset: Preset, size: tuple[int, 
     rhf = fonts.load_font("sans", max(13, int(unit * 0.024)))
     fonts.draw_text_measured(draw, (hx, hy), reader_header, rhf, (88, 82, 76, 255))
 
-    chip_text = "999+ 人划线"
+    chip_text = "阅读摘录"
     cf = fonts.load_font("sans", max(11, int(unit * 0.018)))
     cw_txt, ch_txt = fonts.text_size(draw, chip_text, cf)
     cp_x, cp_y = max(8, int(unit * 0.012)), max(3, int(unit * 0.005))
@@ -1332,12 +1338,7 @@ def _render_quote_tweet(brief: CoverBrief, preset: Preset, size: tuple[int, int]
 
     draw.line([(int(hx), int(fy - 12)), (int(hr_x), int(fy - 12))], fill=(240, 242, 246, 255), width=1)
 
-    actions = [
-        ("REPLIES", "348"),
-        ("REPOSTS", "1.4K"),
-        ("LIKES", "9.6K"),
-        ("SAVES", "2,150"),
-    ]
+    actions = [("REPLIES", ""), ("REPOSTS", ""), ("LIKES", ""), ("SAVES", "")]
     lbl_font = fonts.load_font("sans_light", max(10, int(unit * 0.016)))
     num_font = fonts.load_font("sans", max(11, int(unit * 0.019)))
     act_spacing = (hr_x - hx) / len(actions)
@@ -1397,16 +1398,16 @@ def draw_type_bullet(img: Image.Image, brief: CoverBrief, preset: Preset) -> Ima
         date_box = fonts.draw_text_measured(draw, (x, cursor + int(unit * 0.016)), brief.date, d_font, preset.accent + (240,))
         cursor = date_box.y1
 
-    items = brief.bullets or [
-        "全球前沿大模型与具身智能新突破加速涌现",
-        "芯片巨头发布亮眼财报，算力基础设施需求强劲",
-        "国内 AI 落地应用迎来政策红利，产业赋能提速",
-    ]
+    items = brief.bullets
+    if not items:
+        raise ValueError("bullet layout requires --bullets from the supplied content")
+    if len(items) > 4:
+        raise TextOverflowError("bullet layout supports at most 4 items; split the list across images")
     item_font = fonts.load_font("sans", max(16, int(unit * 0.036)))
     num_font = fonts.load_font("display_num", max(14, int(unit * 0.030)))
     iy = cursor + int(unit * 0.032)
 
-    for i, item in enumerate(items[:4]):
+    for i, item in enumerate(items):
         tag_str = "%02d" % (i + 1)
         badge_w = int(unit * 0.062)
         badge_h = int(unit * 0.042)
@@ -1579,11 +1580,15 @@ def draw_type_briefing(img: Image.Image, brief: CoverBrief, preset: Preset) -> I
         draw, (x, rule1 + max(12, int(h * 0.012))), "TODAY'S BRIEF", idx_font, preset.accent + (220,)
     )
 
-    items = brief.bullets[:4] if brief.bullets else _default_briefs()
+    items = brief.bullets
+    if not items:
+        raise ValueError("briefing layout requires --bullets from the supplied content")
+    if len(items) > 3:
+        raise TextOverflowError("briefing layout supports at most 3 items; split the list across images")
     item_font = fonts.load_font("sans", max(16, int(unit * (0.032 if tall else 0.038))))
     num_font = fonts.load_font("display_num", max(18, int(unit * (0.036 if tall else 0.042))))
     iy = idx.y1 + max(14, int(h * 0.014))
-    n = min(3, len(items))
+    n = len(items)
     footer_reserve = max(48, int(unit * 0.08))
 
     for i, item in enumerate(items[:n]):
@@ -1604,7 +1609,7 @@ def draw_type_briefing(img: Image.Image, brief: CoverBrief, preset: Preset) -> I
         else:
             iy = row_bottom
         if iy > box_bottom - footer_reserve:
-            break
+            raise TextOverflowError("briefing items exceed the available height; split the list across images")
 
     close_y = iy + max(20, int(h * 0.022))
     draw.line([(int(x), int(close_y)), (int(box_right), int(close_y))], fill=preset.title + (70,), width=1)
@@ -1855,14 +1860,16 @@ def render_pack(
     render_cover(square_brief)
     results["share_square"] = square_path
 
-    # 7. Daily Briefing (竖版简报 3:4)
+    # 7. Daily Briefing (竖版简报 3:4), only when supplied.
+    if not bullets:
+        return results
     briefing_path = os.path.join(out_dir, "07_briefing.png")
     briefing_brief = CoverBrief(
         title=title,
         brand=brand,
         date=date,
         sub=sub,
-        bullets=bullets or _default_briefs(),
+        bullets=bullets,
         out=briefing_path,
         layout="briefing",
         ratio="3:4",

@@ -8,6 +8,7 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+from urllib.parse import unquote
 
 from skillmeta import (
     FORBIDDEN,
@@ -24,6 +25,29 @@ MAX_NAME = 64
 MAX_DESC = 1024
 MAX_COMPAT = 500
 MAX_SKILL_LINES = 500
+LOCAL_LINK = re.compile(r'\[[^\]\n]+\]\((?:<([^>]+)>|([^\s)]+))(?:\s+"[^"]*")?\)')
+BUNDLED_PATH = re.compile(r"<skill-dir>/((?:scripts|references|assets)/[A-Za-z0-9_./-]+\.[A-Za-z0-9]+)")
+
+
+def check_resources(skill_dir: Path, errors: list[str]) -> None:
+    """Check links relative to their document, including on-demand references."""
+    documents = [skill_dir / "SKILL.md"]
+    documents.extend(sorted((skill_dir / "references").rglob("*.md")))
+    root = skill_dir.resolve()
+    for document in documents:
+        text = document.read_text(encoding="utf-8")
+        targets = [(match.group(1) or match.group(2), document.parent)
+                   for match in LOCAL_LINK.finditer(text)]
+        targets.extend((match.group(1), skill_dir) for match in BUNDLED_PATH.finditer(text))
+        for target, base in targets:
+            if target.startswith("#") or re.match(r"^[A-Za-z][A-Za-z0-9+.-]*:", target):
+                continue
+            relative = unquote(target.split("#", 1)[0].split("?", 1)[0])
+            linked = (base / relative).resolve()
+            if linked != root and root not in linked.parents:
+                fail(errors, f"{document}: resource escapes installable skill: {target}")
+            elif not linked.exists():
+                fail(errors, f"{document}: missing bundled resource {target}")
 
 
 def fail(errors: list[str], message: str) -> None:
@@ -54,8 +78,10 @@ def check_skill(meta: dict, errors: list[str]) -> None:
         return
     if name != skill_dir.name:
         fail(errors, f"{path}: name {name!r} != directory {skill_dir.name!r}")
-    if len(name) > MAX_NAME or not NAME_RE.match(name):
+    if len(name) > MAX_NAME or not NAME_RE.fullmatch(name):
         fail(errors, f"{path}: invalid name {name!r}")
+    if not name.startswith("tong-") or name == "tong-":
+        fail(errors, f"{path}: public skill name must be tong-<job>")
 
     desc = str(meta.get("description") or "").strip()
     if not desc:
@@ -79,21 +105,24 @@ def check_skill(meta: dict, errors: list[str]) -> None:
         fail(errors, str(exc))
 
     extra = meta.get("metadata") or {}
-    if isinstance(extra, dict) and not extra.get("author"):
-        fail(errors, f"{path}: metadata.author is required")
+    if not isinstance(extra, dict) or extra.get("author") != "TongSkills":
+        fail(errors, f"{path}: metadata.author must be TongSkills")
 
     body = str(meta.get("_body") or "")
     line_count = len(meta["_text"].splitlines())
-    if line_count > MAX_SKILL_LINES:
-        fail(errors, f"{path}: {line_count} lines (max {MAX_SKILL_LINES})")
+    if line_count >= MAX_SKILL_LINES:
+        fail(errors, f"{path}: {line_count} lines (must be < {MAX_SKILL_LINES})")
 
-    for match in re.finditer(r"\(([^)]+\.md)\)", body):
-        target = match.group(1)
-        if target.startswith(("http://", "https://", "#")):
-            continue
-        linked = (skill_dir / target).resolve()
-        if not linked.is_file():
-            fail(errors, f"{path}: broken link {target}")
+    if (re.match(r"TODO\b", desc, re.I)
+            or re.search(r"\{\{[A-Z_]+\}\}", meta["_text"])
+            or re.search(r"(?m)^\s*(?:[-*]\s+)?TODO(?:\s*:|\s*$)", body)
+            or "One paragraph: what the agent actually does. No marketing." in body):
+        fail(errors, f"{path}: unfinished scaffold placeholder")
+    check_resources(skill_dir, errors)
+
+    if any((skill_dir / "scripts").rglob("*.py")):
+        if not any((skill_dir / "tests").rglob("test_*.py")):
+            fail(errors, f"{skill_dir.name}: bundled scripts require tests/test_*.py")
 
     if "\\" in body and re.search(r"[A-Za-z]:\\|\\\\", body):
         fail(errors, f"{path}: use forward slashes, not Windows paths")
@@ -118,12 +147,16 @@ def check_catalog(root: Path, skill_names: set[str], errors: list[str]) -> None:
         fail(errors, f"catalog.yaml extra: {', '.join(sorted(extra))}")
     readme = (root / "README.md").read_text(encoding="utf-8")
     for name in sorted(skill_names):
-        if name not in readme:
-            fail(errors, f"README.md does not mention skill {name}")
+        row = rf"(?m)^\|\s*\[{re.escape(name)}\]\(skills/{re.escape(name)}/\)\s*\|"
+        if not re.search(row, readme):
+            fail(errors, f"README.md missing catalog row for {name}")
 
 
 def run_tests(skill_dir: Path, errors: list[str]) -> None:
-    tests = skill_dir / "tests"
+    run_test_directory(skill_dir / "tests", skill_dir, skill_dir.name, errors)
+
+
+def run_test_directory(tests: Path, cwd: Path, label: str, errors: list[str]) -> None:
     if not tests.is_dir():
         return
     result = subprocess.run(
@@ -137,10 +170,10 @@ def run_tests(skill_dir: Path, errors: list[str]) -> None:
             "-p",
             "test_*.py",
         ],
-        cwd=str(skill_dir),
+        cwd=str(cwd),
     )
     if result.returncode != 0:
-        fail(errors, f"{skill_dir.name}: tests failed")
+        fail(errors, f"{label}: tests failed")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -187,6 +220,8 @@ def main(argv: list[str] | None = None) -> int:
         run_tests(skill_dir, errors)
     if not args.skill:
         check_catalog(root, names, errors)
+        run_test_directory(root / "scripts" / "tests", root, "repo tooling", errors)
+        run_test_directory(root / "playground" / "tests", root, "playground", errors)
 
     if errors:
         print("validate failed:", file=sys.stderr)
