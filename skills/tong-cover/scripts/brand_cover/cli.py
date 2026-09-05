@@ -68,6 +68,10 @@ def build_parser():
     ap.add_argument("--highlight", default="", help="金句重点高亮词 (也可在 quote 中直接使用 ==词语== 语法)")
     ap.add_argument("--bullets", default="", help="要闻清单分号分隔 (用于 bullet 速览清单卡)")
     ap.add_argument("--dividers", default="", help="章节列表分号分隔，如: '01:今日头条:热点速览; 02:前沿思考:深度解读'")
+    ap.add_argument("--points", nargs="*", help="轮播卡片要点，格式: 'Step|Heading|Body|Takeaway' (用于 card 轮播切片)")
+    ap.add_argument("--outro", default="", help="轮播卡片末页金句/收束语 (用于 card 轮播切片)")
+    ap.add_argument("--spec", default="", help="轮播卡片 JSON 规范文件路径 (用于 card 轮播切片)")
+    ap.add_argument("--out-dir", default="", help="多图/卡片组输出目录 (等同于 --pack)")
     ap.add_argument("--pack", default="", help="全套物料输出目录，一行生成公众号全套视觉图片")
     ap.add_argument("--out", default="out/cover.png", help="单图输出路径")
     ap.add_argument("--seed", type=int, default=42, help="随机种子")
@@ -127,6 +131,69 @@ def main(argv=None):
         print("PACK OK -> Output Directory:", args.pack)
         for k, v in results.items():
             print("  - %s: %s" % (k, v))
+        return 0
+
+    # Multi-card Carousel Generation
+    if args.layout in ("card", "carousel") or args.spec or args.points:
+        import json
+        from pathlib import Path
+        from .cards import render_card_suite
+
+        out_dir = Path(args.out_dir or args.pack or (args.out if not args.out.endswith(".png") else "out/cards"))
+        parsed_points = []
+        card_style = args.style if args.style in ("warm", "dark", "editorial") else "warm"
+
+        if args.spec:
+            with open(args.spec, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            t = data.get("title", args.title or "未命名主题")
+            s = data.get("subtitle", sub_text)
+            tg = data.get("tag", args.tag or "精选")
+            au = data.get("author", args.author)
+            br = data.get("brand", brand_text)
+            st = data.get("style", card_style)
+            ou = data.get("outro", args.outro or args.quote)
+            for p in data.get("points", []):
+                parsed_points.append((
+                    p.get("step", "01"),
+                    p.get("heading", ""),
+                    p.get("body", ""),
+                    p.get("takeaway", ""),
+                ))
+        else:
+            t = args.title or "未命名主题"
+            s = sub_text
+            tg = args.tag or "精选"
+            au = args.author
+            br = brand_text
+            st = card_style
+            ou = args.outro or args.quote or "好文章不是堆出来的，是剪出来的。"
+            if args.points:
+                for item in args.points:
+                    parts = item.split("|")
+                    step = parts[0] if len(parts) > 0 else "01"
+                    h = parts[1] if len(parts) > 1 else ""
+                    b = parts[2] if len(parts) > 2 else ""
+                    take = parts[3] if len(parts) > 3 else ""
+                    parsed_points.append((step, h, b, take))
+            elif bullets_list:
+                for idx, b in enumerate(bullets_list, 1):
+                    parsed_points.append(("%02d" % idx, b, "", ""))
+
+        saved = render_card_suite(
+            title=t,
+            subtitle=s,
+            tag=tg,
+            points=parsed_points,
+            outro=ou,
+            author=au,
+            brand=br,
+            out_dir=out_dir,
+            style=st,
+        )
+        print("CARDS OK -> Output Directory:", str(out_dir))
+        for p in saved:
+            print("  -", p.name)
         return 0
 
     # Single Cover Generation

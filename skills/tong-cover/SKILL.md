@@ -2,13 +2,13 @@
 name: tong-cover
 description: >-
   Renders brand covers and full article visual suites locally with Pillow:
-  公众号封面 2.35:1, 刊头 4:3, 简报竖封 3:4, 分割条 4:1, 金句卡, 要闻清单卡.
+  公众号封面 2.35:1, 刊头 4:3, 简报竖封 3:4, 分割条 4:1, 金句卡, 要闻清单卡, 小红书轮播图组.
   Use when the user asks for 封面, 刊头, 分割条, 金句卡, 每日速览, 简报, 竖封, 小红书, 小绿书,
-  视频号图文, brand cover, tong-cover, or 整套图文配图.
+  视频号图文, 轮播卡片, 知识卡片, brand cover, tong-cover, or 整套图文配图.
 license: MIT
 compatibility: Requires Python 3.10+ and Pillow. Works on macOS, Windows, and Linux.
 metadata:
-  version: "1.2.0"
+  version: "1.3.0"
   author: TongSkills
 ---
 
@@ -45,12 +45,14 @@ Color board and layout notes: [references/presets.md](references/presets.md)
 | 公众号信息流封面 | `feed` | `2.35:1` |
 | 刊头 / 正文头图 | `editorial` | `4:3` |
 | 竖封 / 简报 / 海报 / 笔记封面 / 小红书 / 小绿书 / 视频号图文 | `briefing` | `3:4`（更长用 `9:16`） |
+| 小红书/社交媒体轮播卡片组 / 多图切片 | `card` / `carousel` | `3:4`（生成成套卡片） |
 | 章节分割条 | `divider` | `4:1` |
 | 金句卡 / 箴言卡 | `quote` | `3:4`（也支持 `1:1`, `9:16`, `16:9`） |
 | 正文里的横版清单 | `bullet` | `4:3` |
 | 朋友圈方图 / 小红书方图 | `square` | `1:1` |
 
-`poster` / `story` / 简报 / 竖封 / 竖版 / 海报 / 小红书 / 小绿书 / 视频号图文 → `briefing`。封面必须带 `--bullets`。
+`poster` / `story` / 简报 / 竖封 / 竖版 / 海报 / 小红书单封 → `briefing`。
+长文拆解切片成套卡片 → `card` 或 `carousel`，配合 `--points` 与 `--out-dir`。
 
 ### 金句卡风格 (`--style`)
 
@@ -99,6 +101,18 @@ python3 "<skill-dir>/scripts/make_cover.py" --layout divider --ratio 4:1 --num 0
 python3 "<skill-dir>/scripts/make_cover.py" --layout quote --style polaroid --brand "晚点LatePost" --quote "天下大事，必作于细。" --out tmp/tong-cover/quote_brand.png
 python3 "<skill-dir>/scripts/make_cover.py" --layout quote --style paper --no-brand --quote "大道至简，行稳致远。" --out tmp/tong-cover/quote_clean.png
 python3 "<skill-dir>/scripts/make_cover.py" --list
+```
+
+Card carousel (小红书/社交媒体轮播图组):
+
+```bash
+python3 "<skill-dir>/scripts/make_cover.py" \
+  --layout card \
+  --title "打造爆款技术写作" \
+  --sub "从灵感到视觉输出的全流程思考" \
+  --points "01 选题切角:拒绝空洞口号，锚定真实冲突; 02 结构骨架:电影冷开场加八段式展开; 03 视觉呈现:自适应3比4多卡切片轮播" \
+  --outro "写作者最大的资产，是持续且真诚的表达。" \
+  --out-dir tmp/tong-cover/cards
 ```
 
 `--pack` files:

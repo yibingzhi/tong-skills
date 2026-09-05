@@ -34,8 +34,8 @@ skills:
   - name: tong-cover
     status: published
     category: media
-    summary: 本地 Pillow 出封面/刊头/简报/金句卡，按星期换色，macOS·Windows·Linux
-    tags: cover,wechat,pillow
+    summary: 本地 Pillow 出封面/刊头/简报/金句卡/小红书多图轮播卡片组，按星期换色，macOS·Windows·Linux
+    tags: cover,wechat,card,carousel,pillow
   - name: tong-chart
     status: published
     category: media

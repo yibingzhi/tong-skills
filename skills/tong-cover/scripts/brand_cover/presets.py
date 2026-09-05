@@ -176,7 +176,7 @@ RATIOS = {
     "4:1": (1600, 400),
 }
 
-LAYOUTS = ("editorial", "poster", "banner", "story", "feed", "divider", "quote", "bullet", "square", "briefing")
+LAYOUTS = ("editorial", "poster", "banner", "story", "feed", "divider", "quote", "bullet", "square", "briefing", "card", "carousel")
 QUOTE_STYLES = ("paper", "editorial", "highlight", "dark", "cinema", "polaroid", "tweet")
 COVER_THEMES = ("celestial", "swiss", "press")
 LAYOUT_ALIASES = {
@@ -193,6 +193,12 @@ LAYOUT_ALIASES = {
     "简报": "briefing",
     "竖封": "briefing",
     "竖版": "briefing",
+    "card": "card",
+    "carousel": "card",
+    "轮播": "card",
+    "轮播图": "card",
+    "小红书卡片": "card",
+    "切片": "card",
     "海报": "briefing",
 }
 

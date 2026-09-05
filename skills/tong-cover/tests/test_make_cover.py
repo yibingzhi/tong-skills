@@ -211,6 +211,30 @@ class TestTongCover(unittest.TestCase):
             self.assertEqual(res3.returncode, 0, res3.stderr.decode("utf-8", "replace"))
             self.assertTrue(out_briefing.is_file())
 
+    def test_card_carousel_layout(self) -> None:
+        try:
+            spec = importlib.util.find_spec("PIL")
+        except ValueError:
+            spec = None
+        if spec is None:
+            self.skipTest("Pillow not installed")
+        with tempfile.TemporaryDirectory(prefix="tong-cover-card-") as tmp:
+            cards_dir = Path(tmp) / "cards"
+            res = run_script(
+                "--layout", "card",
+                "--title", "轮播卡片测试",
+                "--sub", "副标题",
+                "--tag", "干货",
+                "--points", "01|第一点|详细正文|核心洞察", "02|第二点|详细正文|核心洞察",
+                "--outro", "结语金句",
+                "--out-dir", str(cards_dir),
+            )
+            self.assertEqual(res.returncode, 0, res.stderr.decode("utf-8", "replace"))
+            self.assertTrue((cards_dir / "card_01_cover.png").is_file())
+            self.assertTrue((cards_dir / "card_02_point.png").is_file())
+            self.assertTrue((cards_dir / "card_03_point.png").is_file())
+            self.assertTrue((cards_dir / "card_04_outro.png").is_file())
+
 
 if __name__ == "__main__":
     unittest.main()
