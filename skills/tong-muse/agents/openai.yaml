@@ -1,0 +1,8 @@
+interface:
+  display_name: "Tong Muse"
+  short_description: "灵感催化与表达教练：苏格拉底追问/细节白描/思维破局与即时微课"
+  default_prompt: >-
+    Use $tong-muse for this task. Follow SKILL.md. Prefer bundled scripts
+    over regenerating them.
+policy:
+  allow_implicit_invocation: true

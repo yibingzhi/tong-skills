@@ -177,6 +177,8 @@ RATIOS = {
 }
 
 LAYOUTS = ("editorial", "poster", "banner", "story", "feed", "divider", "quote", "bullet", "square", "briefing")
+QUOTE_STYLES = ("paper", "editorial", "highlight", "dark", "cinema", "polaroid", "tweet")
+COVER_THEMES = ("celestial", "swiss", "press")
 LAYOUT_ALIASES = {
     "masthead": "editorial",
     "刊头": "editorial",

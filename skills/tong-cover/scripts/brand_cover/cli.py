@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 
-from .presets import LAYOUTS, PRESETS, RATIOS, WEEKDAY_PRESET, today_cn_date
+from .presets import COVER_THEMES, LAYOUTS, PRESETS, QUOTE_STYLES, RATIOS, WEEKDAY_PRESET, today_cn_date
 from .render import CoverBrief, render_cover, render_pack
 
 
@@ -48,17 +49,23 @@ def parse_dividers_arg(val: str) -> list[tuple[str, str, str]]:
 def build_parser():
     ap = argparse.ArgumentParser(description="Brand cover & article visual suite renderer")
     ap.add_argument("--title", default="每日速览", help="主标题 / 栏目名 / 章节名")
-    ap.add_argument("--sub", default="", help="副标题 / 补充信息")
+    ap.add_argument("--sub", default="", help="副标题 / 补充信息 / 金句解读")
     ap.add_argument("--kicker", default="", help="同 --sub")
-    ap.add_argument("--tag", default="", help="同 --sub")
-    ap.add_argument("--brand", default="橦云异梦", help="品牌名称 (默认: 橦云异梦)")
+    ap.add_argument("--tag", default="", help="分类标签 (如: 认知跃迁, 职场真相)")
+    default_brand = os.getenv("TONG_BRAND", "橦云异梦")
+    ap.add_argument("--brand", default=default_brand, help="品牌名称 (默认: %s，支持环境变量 TONG_BRAND)" % default_brand)
+    ap.add_argument("--no-brand", action="store_true", help="纯净无水印模式（不显示品牌名与印章）")
     ap.add_argument("--date", default="", help="日期 (空则自动按今天，如: 9月1日 星期二)")
     ap.add_argument("--preset", default="auto", choices=["auto"] + list(PRESETS), help="颜色预设 (auto 自动按星期选色)")
+    ap.add_argument("--theme", default="auto", choices=["auto"] + list(COVER_THEMES), help="封面背景主题 (celestial 云月星辰, swiss 现代瑞士网格, press 复古报刊)")
     ap.add_argument("--layout", default="auto", choices=["auto"] + list(LAYOUTS), help="版式 (feed, editorial, briefing, divider, quote, bullet, square, banner)")
-    ap.add_argument("--ratio", default="4:3", help="图片比例 (16:9, 1:1, 4:3, 3:4, 9:16, 2.35:1, 4:1, 3:1)")
+    ap.add_argument("--ratio", default="auto", help="图片比例 (16:9, 1:1, 4:3, 3:4, 9:16, 2.35:1, 4:1, 3:1；auto 自动随版式)")
     ap.add_argument("--num", default="01", help="章节号 (用于 divider 分割条)")
-    ap.add_argument("--quote", default="", help="金句正文 (用于 quote 金句卡)")
+    ap.add_argument("--quote", default="", help="金句正文 (用于 quote 金句卡，支持 ==重点词== 高亮划线语法)")
     ap.add_argument("--author", default="", help="金句作者 / 出处 (用于 quote 金句卡)")
+    ap.add_argument("--source", default="", help="出处 / 来源书名 (用于 quote 金句卡，如: 《纳瓦尔宝典》)")
+    ap.add_argument("--style", default="auto", choices=["auto"] + list(QUOTE_STYLES), help="金句卡视觉模板 (paper 宣纸便签, editorial 杂志高定, highlight 划线读书, dark 暗黑极客, cinema 电影台词, polaroid 拍立得, tweet 社交推文)")
+    ap.add_argument("--highlight", default="", help="金句重点高亮词 (也可在 quote 中直接使用 ==词语== 语法)")
     ap.add_argument("--bullets", default="", help="要闻清单分号分隔 (用于 bullet 速览清单卡)")
     ap.add_argument("--dividers", default="", help="章节列表分号分隔，如: '01:今日头条:热点速览; 02:前沿思考:深度解读'")
     ap.add_argument("--pack", default="", help="全套物料输出目录，一行生成公众号全套视觉图片")
@@ -72,7 +79,9 @@ def main(argv=None):
     args = build_parser().parse_args(argv)
     if args.list:
         print("presets:", ", ".join(PRESETS))
+        print("cover themes:", ", ".join(COVER_THEMES))
         print("layouts:", ", ".join(LAYOUTS))
+        print("quote styles:", ", ".join(QUOTE_STYLES))
         print("ratios:", ", ".join(RATIOS))
         print("weekday mapping:", ", ".join("%s=%s" % item for item in WEEKDAY_PRESET.items() if item[0] != "天"))
         from .fonts import diagnose
@@ -84,6 +93,7 @@ def main(argv=None):
 
     sub_text = args.sub or args.kicker or args.tag
     date_text = args.date or today_cn_date()
+    brand_text = "" if args.no_brand or (args.brand and args.brand.strip().lower() in ("none", "null", "false", "clean", "off")) else (args.brand or "")
 
     # Full Pack Generation
     if args.pack:
@@ -92,7 +102,7 @@ def main(argv=None):
         results = render_pack(
             out_dir=args.pack,
             date=date_text,
-            brand=args.brand,
+            brand=brand_text,
             title=args.title or "每日速览",
             sub=sub_text,
             bullets=bullets_list if bullets_list else [
@@ -102,12 +112,16 @@ def main(argv=None):
             ],
             quote=args.quote or "流水不争先，争的是滔滔不绝。",
             author=args.author,
+            source=args.source,
+            style=args.style,
+            highlight=args.highlight,
             dividers=dividers_list if dividers_list else [
                 ("01", "今日头条", "前沿动向与核心大事件"),
                 ("02", "行业观察", "技术落地与商业思考"),
                 ("03", "深度洞察", "未来趋势与行业启示"),
             ],
             preset=args.preset,
+            theme=args.theme,
             seed=args.seed,
         )
         print("PACK OK -> Output Directory:", args.pack)
@@ -122,15 +136,20 @@ def main(argv=None):
         sub=sub_text,
         kicker=sub_text,
         out=args.out,
-        brand=args.brand,
+        brand=brand_text,
         date=date_text,
         preset=args.preset,
+        theme=args.theme,
         layout=args.layout,
         ratio=args.ratio,
         seed=args.seed,
         num=args.num,
         quote=args.quote,
         author=args.author,
+        source=args.source,
+        style=args.style,
+        highlight=args.highlight,
+        tags=[args.tag] if args.tag else [],
         bullets=bullets_list,
     )
     info = render_cover(brief)

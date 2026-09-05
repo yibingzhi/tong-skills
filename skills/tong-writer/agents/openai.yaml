@@ -1,0 +1,8 @@
+interface:
+  display_name: "Tong Writer"
+  short_description: "内容流水线编排器：8阶创作全流程调度/素材初筛与状态机管理"
+  default_prompt: >-
+    Use $tong-writer for this task. Follow SKILL.md. Prefer bundled scripts
+    over regenerating them.
+policy:
+  allow_implicit_invocation: true

@@ -1,0 +1,8 @@
+interface:
+  display_name: "Tong Title"
+  short_description: "爆款标题矩阵工厂：四维模型切角探索与多平台终稿标题"
+  default_prompt: >-
+    Use $tong-title for this task. Follow SKILL.md. Prefer bundled scripts
+    over regenerating them.
+policy:
+  allow_implicit_invocation: true

@@ -6,27 +6,56 @@ Skill 素材库。格式遵循 [Agent Skills](https://agentskills.io/specificati
 
 ## 现在有什么
 
+### ✍️ 深度写作流水线 (Writing Pipeline)
+
+覆盖从“灵感催化”到“长文成稿、去AI味终审与标题矩阵”的工业级创作矩阵：
+
+```text
+[灵感困境/碎片] ──> tong-muse (灵感催化与素材拆解)
+                         │
+                         ▼
+                   tong-writer (长文创作中枢)
+                   (立意骨架 + 镜头开篇 + 正文展开 + 金句点睛)
+                         │
+                         ├────────────────────────┐
+                         ▼                        ▼
+                   tong-humanize              tong-title
+                (去AI味扫描与主编终审)      (多平台爆款标题矩阵)
+```
+
 | Skill | 做什么 |
 |---|---|
-| [tong-chart](skills/tong-chart/) | 本地 Mermaid 出图（流程 / 架构 / 时序 / 甘特等），多主题，macOS · Windows · Linux |
+| [tong-muse](skills/tong-muse/) | 灵感催化与表达教练：苏格拉底追问 / 四层事实与冲突拆解 / 即时微课 |
+| [tong-writer](skills/tong-writer/) | 长文写作中枢：3 切角立意与 8 段骨架 / 电影感冷开场 / 正文起草与金句点睛 |
+| [tong-humanize](skills/tong-humanize/) | 去 AI 味与主编终审：扫描套话标点 / 九维负向剪枝 / 事实一票否决门禁 |
+| [tong-title](skills/tong-title/) | 爆款标题矩阵工厂：四维心理模型切角探索与多平台终稿标题 |
+
+### 🎨 视觉与媒介工坊 (Visual & Media)
+
+| Skill | 做什么 |
+|---|---|
 | [tong-cover](skills/tong-cover/) | 本地 Pillow 封面 / 刊头 / 简报 / 金句卡，按星期换色 |
+| [tong-chart](skills/tong-chart/) | 本地 Mermaid 出图（流程 / 架构 / 时序 / 甘特等），多主题，macOS · Windows · Linux |
+| [tong-prompt](skills/tong-prompt/) | 引导作者把想法写成可粘贴的图 / 视频提示词，先锁锚点再扫塑料词 |
+
+### 🛠️ 研发与基础设施 (DevOps & Data)
+
+| Skill | 做什么 |
+|---|---|
 | [tong-git](skills/tong-git/) | 项目仓状态 → 按需提交 → 推到 Gitee / GitHub / CNB |
-| [tong-humanize](skills/tong-humanize/) | 写文章或去 AI 味：扫描套话 / 三毒 / 标点，按栏目交稿 |
 | [tong-mysql-ro](skills/tong-mysql-ro/) | 只读 MySQL：SELECT / SHOW / DESCRIBE，强制 LIMIT，凭证本地填 |
 | [tong-mysql-write](skills/tong-mysql-write/) | 写库 DML：默认预览，确认后 `--apply` 并落回滚 SQL；不做 DDL |
-| [tong-prompt](skills/tong-prompt/) | 引导作者把想法写成可粘贴的图 / 视频提示词，先锁锚点再扫塑料词 |
 
 ## 安装
 
 ```bash
 npx skills add https://gitee.com/yibingzhi/tong-skills.git
+npx skills add https://gitee.com/yibingzhi/tong-skills.git --skill tong-muse
 npx skills add https://gitee.com/yibingzhi/tong-skills.git --skill tong-chart
 npx skills add https://gitee.com/yibingzhi/tong-skills.git --skill tong-cover
 npx skills add https://gitee.com/yibingzhi/tong-skills.git --skill tong-git
 npx skills add https://gitee.com/yibingzhi/tong-skills.git --skill tong-humanize
-npx skills add https://gitee.com/yibingzhi/tong-skills.git --skill tong-mysql-ro
-npx skills add https://gitee.com/yibingzhi/tong-skills.git --skill tong-mysql-write
-npx skills add https://gitee.com/yibingzhi/tong-skills.git --skill tong-prompt
+npx skills add https://gitee.com/yibingzhi/tong-skills.git --skill tong-writer
 ```
 
 短名 `owner/repo` 只走 GitHub，Gitee 必须用完整 git URL。仓库需公开。

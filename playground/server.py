@@ -167,6 +167,8 @@ def list_skills() -> dict:
         stub = catalog.get(skill_dir.name) or {}
         info["summary"] = stub.get("summary") or info["description"][:80]
         info["status"] = stub.get("status") or "draft"
+        info["category"] = stub.get("category") or "other"
+        info["tags"] = stub.get("tags") or ""
         rows.append(info)
     return {"skills": rows, "skipped": skipped}
 
