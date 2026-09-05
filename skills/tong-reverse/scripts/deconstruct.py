@@ -67,7 +67,7 @@ def get_video_metadata(video_path: Path) -> Dict[str, float | int | str]:
                 "-of", "json",
                 str(video_path)
             ]
-            res = subprocess.run(cmd, capture_output=True, text=True, check=True)
+            res = subprocess.run(cmd, capture_output=True, text=True, errors="replace", check=True)
             data = json.loads(res.stdout)
             if "format" in data and "duration" in data["format"]:
                 meta["duration"] = float(data["format"]["duration"])
@@ -118,7 +118,7 @@ def extract_frame_ffmpeg(video_path: Path, timestamp: float, out_path: Path, ffm
             "-q:v", "2",
             str(out_path),
         ]
-        res = subprocess.run(cmd, capture_output=True, text=True)
+        res = subprocess.run(cmd, capture_output=True, text=True, errors="replace")
         return res.returncode == 0 and out_path.is_file()
     except Exception:
         return False
