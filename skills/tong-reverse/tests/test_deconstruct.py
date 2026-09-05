@@ -13,10 +13,24 @@ from PIL import Image
 
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
-from deconstruct import build_contact_sheet, deconstruct_video, find_ffmpeg, get_video_metadata
+from deconstruct import analyze_image, build_contact_sheet, deconstruct_video, find_ffmpeg, get_video_metadata
 
 
 class TestDeconstruct(unittest.TestCase):
+    def test_analyze_image(self):
+        with tempfile.TemporaryDirectory(prefix="tong-reverse-img-") as tmp:
+            tmp_path = Path(tmp)
+            img_path = tmp_path / "test_16_9.png"
+            img = Image.new("RGB", (1920, 1080), (255, 120, 20))
+            img.save(img_path)
+
+            res = analyze_image(img_path)
+            self.assertEqual(res["aspect_ratio"], "16:9")
+            self.assertEqual(res["ar_flag"], "--ar 16:9")
+            self.assertEqual(res["width"], 1920)
+            self.assertEqual(res["height"], 1080)
+            self.assertIn("warm", res["tone_estimate"])
+
     def test_find_ffmpeg(self):
         ffmpeg_bin = find_ffmpeg()
         self.assertTrue(bool(ffmpeg_bin), "ffmpeg should be discoverable on test machine")

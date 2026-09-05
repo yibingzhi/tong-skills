@@ -49,8 +49,8 @@ skills:
   - name: tong-reverse
     status: published
     category: media
-    summary: AI 视频与图像提示词逆向解构：自动抽帧拼图/运镜与物理推测/可灵·Runway·海螺多模型方言转换
-    tags: reverse,video,prompt,deconstruct,kling,runway
+    summary: AI 视频与图像提示词逆向解构：图像文生图(MJ/FLUX/SDXL)+视频抽帧运镜(可灵/Runway/海螺)
+    tags: reverse,video,image,prompt,deconstruct,kling,runway
 
   # ==========================================
   # 🛠️ 研发与基础设施 (DevOps & Data)

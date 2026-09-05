@@ -266,6 +266,50 @@ def deconstruct_video(
     }
 
 
+def analyze_image(image_path: str | Path) -> Dict[str, str | int | float]:
+    p = Path(image_path)
+    if not p.is_file():
+        raise FileNotFoundError(f"Image not found: {p}")
+
+    with Image.open(p) as img:
+        w, h = img.size
+        ratio = w / h if h > 0 else 1.0
+        known_ratios = [
+            ("16:9", 16 / 9),
+            ("9:16", 9 / 16),
+            ("4:3", 4 / 3),
+            ("3:4", 3 / 4),
+            ("1:1", 1.0),
+            ("21:9", 21 / 9),
+            ("3:2", 3 / 2),
+            ("2:3", 2 / 3),
+        ]
+        best_label, _ = min(known_ratios, key=lambda kr: abs(ratio - kr[1]))
+
+        rgb = img.convert("RGB").resize((50, 50))
+        pixels = list(rgb.getdata())
+        avg_r = sum(px[0] for px in pixels) / len(pixels)
+        avg_g = sum(px[1] for px in pixels) / len(pixels)
+        avg_b = sum(px[2] for px in pixels) / len(pixels)
+        brightness = (avg_r * 299 + avg_g * 587 + avg_b * 114) / 1000
+
+        tone = "neutral"
+        if avg_r > avg_b + 20:
+            tone = "warm / golden hour"
+        elif avg_b > avg_r + 20:
+            tone = "cool / cinematic cold"
+
+    return {
+        "image": str(p),
+        "width": w,
+        "height": h,
+        "aspect_ratio": best_label,
+        "ar_flag": f"--ar {best_label}",
+        "brightness": round(brightness, 1),
+        "tone_estimate": tone,
+    }
+
+
 def main():
     try:
         sys.stdout.reconfigure(encoding="utf-8")
@@ -273,14 +317,35 @@ def main():
     except Exception:
         pass
 
-    parser = argparse.ArgumentParser(description="Deconstruct video into keyframes and contact sheet for reverse prompting.")
+    parser = argparse.ArgumentParser(description="Deconstruct video or image for reverse prompting.")
     parser.add_argument("--video", help="Path to video file (.mp4, .mov, .webm, etc.)")
+    parser.add_argument("--image", help="Path to static image file for text-to-image reverse")
     parser.add_argument("--frames", type=int, default=6, help="Number of timeline frames to sample (default: 6)")
     parser.add_argument("--out-dir", default="tmp/reverse", help="Output directory for extracted frames")
-    parser.add_argument("--describe", default="", help="Text description of the video when running in text-only mode")
+    parser.add_argument("--describe", default="", help="Text description of scene when running in text-only mode")
     parser.add_argument("--json", action="store_true", help="Output results as JSON")
 
     args = parser.parse_args()
+
+    if args.image:
+        try:
+            res = analyze_image(args.image)
+            if args.json:
+                print(json.dumps(res, indent=2, ensure_ascii=False))
+            else:
+                print("=== TONG-REVERSE IMAGE MODE ===")
+                print(f"Image: {res['image']} ({res['width']}x{res['height']})")
+                print(f"Aspect Ratio: {res['aspect_ratio']} ({res['ar_flag']})")
+                print(f"Tone: {res['tone_estimate']} (brightness: {res['brightness']})")
+                print("\n[NEXT STEP FOR AGENT]:")
+                print("1. View the image directly using vision.")
+                print("2. Decode 4 visual layers: Subject, Composition/Lens, Lighting, Style/Medium.")
+                print("3. Output native image prompt dialects: Midjourney v6.1, FLUX.1, SDXL, and 即梦/国内.")
+                print("4. ONLY if the user asks to animate it / 图生视频, output Kling / Runway / Hailuo dynamic prompts.")
+            return 0
+        except Exception as e:
+            print(f"[ERROR] {e}", file=sys.stderr)
+            sys.exit(1)
 
     if args.describe:
         print("=== TONG-REVERSE TEXT MODE ===")

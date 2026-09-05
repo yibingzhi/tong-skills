@@ -37,7 +37,7 @@ Skill 素材库。格式遵循 [Agent Skills](https://agentskills.io/specificati
 | [tong-cover](skills/tong-cover/) | 本地 Pillow 封面 / 刊头 / 简报 / 金句卡 / 小红书多图轮播卡片组，按星期换色 |
 | [tong-chart](skills/tong-chart/) | 本地 Mermaid 出图（流程 / 架构 / 时序 / 甘特等），多主题，macOS · Windows · Linux |
 | [tong-prompt](skills/tong-prompt/) | 引导作者把想法写成可粘贴的图 / 视频提示词，先锁锚点再扫塑料词 |
-| [tong-reverse](skills/tong-reverse/) | AI 视频与图像提示词逆向解构：自动抽帧拼图 / 运镜与物理推测 / 可灵·Runway·海螺多模型方言转换 |
+| [tong-reverse](skills/tong-reverse/) | AI 视频与图像提示词逆向解构：图像文生图 (MJ/FLUX/SDXL) + 视频抽帧运镜 (可灵/Runway/海螺) |
 
 ### 🛠️ 研发与基础设施 (DevOps & Data)
 
